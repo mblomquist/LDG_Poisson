@@ -26,6 +26,8 @@ class uniformGrid
 
     bool print_vtk_header = false;
 
+    algoim::uvector<bool, N> is_periodic = false;
+
     int zOrderMap(algoim::uvector<int,N> elm)
     {
         int id = 0;
@@ -126,6 +128,47 @@ public:
             total *= elements_per_dim(i);
         }
         return total;
+    }
+
+    algoim::uvector<int, N> get_faces_by_dim()
+    {
+        algoim::uvector<int, N> total_per_dim = 0;
+
+        int total_int = 1;
+
+        for (int dim = 0; dim < N; ++dim) {
+
+            total_int = elements_per_dim(dim)+1;
+
+            for (int idim = 0; idim < N; ++idim) {
+
+                if (idim != dim)
+                    total_int *= elements_per_dim(dim);
+            }
+            total_per_dim(dim) += total_int;
+        }
+
+        return total_per_dim;
+    }
+
+    int get_total_faces() {
+        int total = 0;
+        algoim::uvector<int, N> total_per_dim = get_faces_by_dim();
+
+        for (int dim = 0; dim < N; ++dim) {
+            total += total_per_dim(dim);
+        }
+        return total;
+    }
+
+    int faceMap()
+    {
+
+    }
+
+    algoim::uvector<int, 2> get_elements_from_face(int face_id)
+    {
+
     }
 
     int get_total_nodes()
