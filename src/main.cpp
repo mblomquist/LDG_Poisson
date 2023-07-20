@@ -19,31 +19,30 @@ int main() {
     constexpr int N = 3;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements;
-    algoim::uvector<double, N> domain_min;
-    algoim::uvector<double, N> domain_max;
+    algoim::uvector<int, N> elements = 3;
+    algoim::uvector<double, N> domain_min = -1.;
+    algoim::uvector<double, N> domain_max =  1.;
 
-    elements = 3;
-//    elements(0) = 5;
-//    elements(1) = 2;
+    PoissonSolver<P,N> solver;
 
-    domain_min = -1.;
-    domain_max = 1.;
+    solver.set_domain(domain_min, domain_max);
+    solver.set_elements_per_dim(elements);
 
-    uniformGrid<N> myGrid(elements, domain_min, domain_max);
-    std::cout << myGrid.get_total_faces() << std::endl;
+    solver.get_domain();
 
-//    // Initialize Poisson Solver
-//    PoissonSolver<P,N> mySolver;
-//
-//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
-//    mySolver.project_rhs(cf_rhs, myGrid);
-//
-//    uvector<int, N> eval_grid = 11;
-//    char output_file[100];
-//    sprintf(output_file, "../out/projected_rhs.vtk");
-//
-//    mySolver.print_rhs_on_uniform_grid(eval_grid, myGrid, output_file);
+    char output_grid[100];
+    sprintf(output_grid, "../out/grid.vtk");
+    solver.print_grid(output_grid);
+
+
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
+    solver.project_rhs(cf_rhs);
+
+    uvector<int, N> eval_grid = 11;
+
+    char output_file[100];
+    sprintf(output_file, "../out/rhs.vtk");
+    solver.print_rhs_on_uniform_grid(eval_grid,  output_file);
 
     return 0;
 }

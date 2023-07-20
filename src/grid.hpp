@@ -74,6 +74,13 @@ class uniformGrid
         return nodes;
     }
 
+    void update_dx()
+    {
+        for (int i = 0; i < N; ++i) {
+            dx(i) = (domain_max(i) - domain_min(i)) / elements_per_dim(i);
+        }
+    }
+
 public:
 
     uniformGrid()
@@ -94,9 +101,26 @@ public:
         domain_min = domain_min_;
         domain_max = domain_max_;
 
-        for (int i = 0; i < N; ++i) {
-            dx(i) = (domain_max_(i) - domain_min_(i)) / elements_per_dim(i);
-        }
+        update_dx();
+    }
+
+
+    void set_domain_min(algoim::uvector<double, N> domain_min_)
+    {
+        domain_min = domain_min_;
+        update_dx();
+    }
+
+    void set_domain_max(algoim::uvector<double, N> domain_max_)
+    {
+        domain_max = domain_max_;
+        update_dx();
+    }
+
+    void set_elements_per_dim(algoim::uvector<int, N> elements_per_dim_)
+    {
+        elements_per_dim = elements_per_dim_;
+        update_dx();
     }
 
     int get_element_id(algoim::uvector<int, N> k)
@@ -159,16 +183,6 @@ public:
             total += total_per_dim(dim);
         }
         return total;
-    }
-
-    int faceMap()
-    {
-
-    }
-
-    algoim::uvector<int, 2> get_elements_from_face(int face_id)
-    {
-
     }
 
     int get_total_nodes()
