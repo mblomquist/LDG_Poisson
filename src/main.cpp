@@ -15,8 +15,8 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 3;
-    constexpr int N = 3;
+    constexpr int P = 4;
+    constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
     algoim::uvector<int, N> elements = 3;
@@ -30,19 +30,21 @@ int main() {
 
     solver.get_domain();
 
-    char output_grid[100];
-    sprintf(output_grid, "../out/grid.vtk");
-    solver.print_grid(output_grid);
+    solver.compute_D();
 
-
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
-    solver.project_rhs(cf_rhs);
-
-    uvector<int, N> eval_grid = 11;
-
-    char output_file[100];
-    sprintf(output_file, "../out/rhs.vtk");
-    solver.print_rhs_on_uniform_grid(eval_grid,  output_file);
+//    char output_grid[100];
+//    sprintf(output_grid, "../out/grid.vtk");
+//    solver.print_grid(output_grid);
+//
+//
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
+//    solver.project_rhs(cf_rhs);
+//
+//    uvector<int, N> eval_grid = 11;
+//
+//    char output_file[100];
+//    sprintf(output_file, "../out/rhs.vtk");
+//    solver.print_rhs_on_uniform_grid(eval_grid,  output_file);
 
     return 0;
 }

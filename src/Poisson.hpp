@@ -112,6 +112,45 @@ public:
 
     }
 
+    void compute_D()
+    {
+        smatrix<double, P> D_1d; // construct 1d operator
+        smatrix<double, ipow(P,N)> temp;
+
+        for (int i = 0; i < P; ++i) {
+            for (int j = i+1; j < P; ++j) {
+                if ((j-i) % 2 != 0){
+                    D_1d(i,j) = 2 * std::sqrt(2*i+1) * std::sqrt(2*j+1);
+                } else {
+                    D_1d(i,j) = 0.;
+                }
+            }
+        }
+
+        for (int dim = 0; dim < N; ++dim) {
+            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
+            {
+                for (int j = 0; j < ipow(P,N-1); ++j) {
+                    if (unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1) < ipow(P,N)) {
+                        D(dim)(unfold<P, N>(i()), unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1)) =
+                                D_1d(i(N-1), i(N-1) + 1 + j);
+                    }
+                }
+            }
+        }
+
+        std::cout << "\n\nPrinting D\n\n" << std::endl;
+        for (int dim = 0; dim < 1; ++dim) {
+            for (int i = 0; i < ipow(P, N); ++i) {
+                for (int j = 0; j < ipow(P, N); ++j) {
+                    std::cout << D(dim)(i,j) << " ";
+                }
+                std::cout << ";" << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
     void print_grid(const std::string& filename)
     {
         grid.print_grid_to_vtk(filename);

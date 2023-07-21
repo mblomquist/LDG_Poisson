@@ -85,4 +85,20 @@ algoim::uvector<double,M> matvec(const smatrix<double, M, N> &A, const algoim::u
     return b;
 }
 
+template<int M, int N, int O>
+smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
+{
+    smatrix<double, M*O, N*O> K;
+
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < N; ++j) {
+            for (int k = 0; k < O; ++k) {
+                K(i*O+k,j*O+k) = A(i,j);
+            }
+        }
+    }
+
+    return K;
+}
+
 #endif //DG_UTILS_SMATRIX_HPP
