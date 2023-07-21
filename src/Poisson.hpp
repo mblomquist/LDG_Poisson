@@ -129,13 +129,15 @@ public:
         for (int dim = 0; dim < N; ++dim) {
             for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
             {
-                for (int j = 0; j < ipow(P,N-1); ++j) {
-                    if (unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1) < ipow(P,N)) {
-                        D(dim)(unfold<P, N>(i()), unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1)) =
-                                D_1d(i(N-1), i(N-1) + 1 + j);
-                    }
+                std::cout << i() << " " << unfold<P, N>(i()) << " | ";
+                for (int j = 0; j < P; ++j) {
+                        D(dim)(unfold<P, N>(i()), unfold<P,N>(i())%P + j*ipow(P,N-1)) =
+                                D_1d(i(dim)%P,j);
+                    std::cout << D_1d(i(dim)%P,j) << " ";
                 }
+                std::cout << std::endl;
             }
+            std::cout << std::endl;
         }
     }
 
@@ -143,6 +145,7 @@ public:
     {
         std::cout << "\n\nPrinting D\n\n" << std::endl;
         for (int dim = 0; dim < N; ++dim) {
+            std::cout << "Dim " << dim << std::endl;
             for (int i = 0; i < ipow(P, N); ++i) {
                 for (int j = 0; j < ipow(P, N); ++j) {
                     std::cout << D(dim)(i,j) << " ";

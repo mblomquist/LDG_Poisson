@@ -29,6 +29,7 @@ int main() {
     solver.set_elements_per_dim(elements);
 
     solver.get_domain();
+    std::cout << std::endl;
 
     solver.compute_D();
     solver.print_Dmat();
