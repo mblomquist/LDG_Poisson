@@ -132,7 +132,7 @@ public:
                 for (int j = 0; j < ipow(P,N-1); ++j) {
                     if (unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1) < ipow(P,N)) {
                         D(dim)(unfold<P, N>(i()), unfold<P, N>(i()) + ipow(P,N-1) + j*ipow(P,N-1)) =
-                                D_1d(i(N-1), i(N-1) + 1 + j) * grid.get_dx(dim);
+                                D_1d(i(N-1), i(N-1) + 1 + j);
                     }
                 }
             }
