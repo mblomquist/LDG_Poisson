@@ -31,6 +31,7 @@ int main() {
     solver.get_domain();
 
     solver.compute_D();
+    solver.print_Dmat();
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");
