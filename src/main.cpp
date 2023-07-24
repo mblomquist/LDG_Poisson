@@ -15,7 +15,7 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 4;
+    constexpr int P = 3;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
@@ -33,6 +33,10 @@ int main() {
 
     solver.compute_D();
     solver.print_Dmat();
+
+    std::function<double(uvector<double, N> x)> test_fun = [](uvector<double, N> x) { return x(1);};
+
+    solver.mult_D(test_fun);
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");

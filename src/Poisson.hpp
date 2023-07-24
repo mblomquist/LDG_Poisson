@@ -156,6 +156,25 @@ public:
         }
     }
 
+    void mult_D(std::function<double(algoim::uvector<double, N> x)> func)
+    {
+        algoim::uvector<double, ipow(P,N)> coeffs;
+        l2_projection_on_reference_element<P,N>(func, coeffs);
+
+        algoim::uvector<double, ipow(P,N)> results;
+
+        for (int dim = 0; dim < N; ++dim) {
+            results = matvec(D(dim), coeffs);
+
+            std::cout << "dx_" << dim << std::endl;
+            for (int i = 0; i < ipow(P, N); ++i) {
+                std::cout << results(i) << ", ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
     void print_grid(const std::string& filename)
     {
         grid.print_grid_to_vtk(filename);
