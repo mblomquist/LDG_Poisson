@@ -15,7 +15,7 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 3;
+    constexpr int P = 5;
     constexpr int N = 3;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
@@ -34,10 +34,10 @@ int main() {
     solver.compute_D();
 //    solver.print_Dmat();
 
-    std::function<double(uvector<double, N> x)> fun = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
-    std::function<double(uvector<double, N> x)> sol_dx = [](uvector<double, N> x) { return x(1)*x(2);};
-    std::function<double(uvector<double, N> x)> sol_dy = [](uvector<double, N> x) { return x(2)*x(0);};
-    std::function<double(uvector<double, N> x)> sol_dz = [](uvector<double, N> x) { return x(0)*x(1);};
+    std::function<double(uvector<double, N> x)> fun = [](uvector<double, N> x) { return x(0)*x(0)*x(1)*x(2);};
+    std::function<double(uvector<double, N> x)> sol_dx = [](uvector<double, N> x) { return 2*x(0)*x(1)*x(2);};
+    std::function<double(uvector<double, N> x)> sol_dy = [](uvector<double, N> x) { return x(0)*x(2)*x(0);};
+    std::function<double(uvector<double, N> x)> sol_dz = [](uvector<double, N> x) { return x(0)*x(0)*x(1);};
 
     solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 

@@ -146,5 +146,28 @@ double evaluate_basis_at_point(algoim::uvector<double, ipow(P,N)> coeff,
     return sum;
 }
 
+template<int P, int N>
+algoim::uvector<double, ipow(P,N)> evaluate_E_at_point(algoim::uvector<double, N> pt)
+{
+    algoim::uvector<algoim::uvector<double,P>, N> basis = 0.;
+    algoim::uvector<double, ipow(P,N)> y;
+
+    for (int dim = 0; dim < N; ++dim) {
+        evaluate_shifted_legendre<P>(pt(dim), basis(dim));
+    }
+
+    double sum = 0.;
+
+    for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
+    {
+        double prod = 1.;
+        for (int dim = 0; dim < N; ++dim) {
+            prod *= basis(dim)(i(dim));
+        }
+        y(unfold<P,N>(i()))= prod;
+    }
+
+    return y;
+}
 
 #endif //DG_UTILS_LEGENDRE_HPP
