@@ -126,33 +126,50 @@ public:
             }
         }
 
-        for (int dim = 1; dim < N; ++dim) {
+//        for (int dim = 1; dim < N; ++dim) {
+//            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
+//            {
+//                std::cout << i() << " " << fold<P, N>(i()) << " | ";
+//                for (int j = 0; j < P; ++j) {
+//                        D(dim)(fold<P, N>(i()), fold<P, N>(i()) % P + j * ipow(P, N - 1)) =
+//                                D_1d(i(dim)%P,j);
+//                    std::cout << D_1d(i(dim)%P,j) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+//            std::cout << std::endl;
+//        }
+//
+//        for (int dim = 0; dim < N-1; ++dim) {
+//            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
+//            {
+//                std::cout << i() << " " << fold<P, N>(i()) << " | ";
+//                for (int j = 1; j < P; ++j) {
+//                    D(dim)(fold<P, N>(i()), fold<P, N>(i()) + j) =
+//                            D_1d(i(dim)%P,(i(dim)+j)%P);
+//                    std::cout << D_1d(i(dim)%P,j) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+//            std::cout << std::endl;
+//        }
+
+        for (int dim = 0; dim < N; ++dim) {
             for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
             {
                 std::cout << i() << " " << fold<P, N>(i()) << " | ";
                 for (int j = 0; j < P; ++j) {
-                        D(dim)(fold<P, N>(i()), fold<P, N>(i()) % P + j * ipow(P, N - 1)) =
-                                D_1d(i(dim)%P,j);
-                    std::cout << D_1d(i(dim)%P,j) << " ";
+                    algoim::uvector<int, N> indx = i();
+                    indx(dim) = j;
+                    D(dim)(fold<P, N>(i()), fold<P, N>(indx)) =
+                            D_1d(i(dim),j);
+                    std::cout << D_1d(i(dim),j) << " ";
                 }
                 std::cout << std::endl;
             }
             std::cout << std::endl;
         }
 
-        for (int dim = 0; dim < N-1; ++dim) {
-            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
-            {
-                std::cout << i() << " " << fold<P, N>(i()) << " | ";
-                for (int j = 1; j < P; ++j) {
-                    D(dim)(fold<P, N>(i()), fold<P, N>(i()) + j) =
-                            D_1d(i(dim)%P,(i(dim)+j)%P);
-                    std::cout << D_1d(i(dim)%P,j) << " ";
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-        }
     }
 
     void print_Dmat()
@@ -182,7 +199,11 @@ public:
 
             std::cout << "dx_" << dim << std::endl;
             for (int i = 0; i < ipow(P, N); ++i) {
-                std::cout << results(i) << ", ";
+                if (std::abs(results(i)) > 1.0e-12){
+                    std::cout << results(i) << ", ";
+                } else {
+                    std::cout << "0, ";
+                }
             }
             std::cout << std::endl;
         }

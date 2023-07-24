@@ -16,46 +16,27 @@ int main() {
 
     // Specify template parameters (order, dimensions)
     constexpr int P = 3;
-    constexpr int N = 5;
+    constexpr int N = 3;
 
-    uvector<int, N> in_t, out_t;
+    std::cout << "\n--- Create a grid --- \n" << std::endl;
+    algoim::uvector<int, N> elements = 3;
+    algoim::uvector<double, N> domain_min = -1.;
+    algoim::uvector<double, N> domain_max =  1.;
 
-    int temp = 0;
+    PoissonSolver<P,N> solver;
 
-    for (MultiLoop<N> i(0,P); ~i; ++i)
-    {
-        in_t = i();
-        out_t = unfold<P,N>(fold<P,N>(i()));
+    solver.set_domain(domain_min, domain_max);
+    solver.set_elements_per_dim(elements);
 
+    solver.get_domain();
+    std::cout << std::endl;
 
-        for (int dim = 0; dim < N; ++dim) {
-            temp += in_t(dim) - out_t(dim);
-        }
-
-        std::cout << i() << " " << fold<P,N>(i()) << " " << unfold<P,N>(fold<P,N>(i())) << std::endl;
-    }
-
-    std::cout << "Difference: " << temp << std::endl;
-
-//    std::cout << "\n--- Create a grid --- \n" << std::endl;
-//    algoim::uvector<int, N> elements = 3;
-//    algoim::uvector<double, N> domain_min = -1.;
-//    algoim::uvector<double, N> domain_max =  1.;
-//
-//    PoissonSolver<P,N> solver;
-//
-//    solver.set_domain(domain_min, domain_max);
-//    solver.set_elements_per_dim(elements);
-//
-//    solver.get_domain();
-//    std::cout << std::endl;
-//
-//    solver.compute_D();
+    solver.compute_D();
 //    solver.print_Dmat();
-//
-//    std::function<double(uvector<double, N> x)> test_fun = [](uvector<double, N> x) { return std::pow(x(1), 3);};
-//
-//    solver.mult_D(test_fun);
+
+    std::function<double(uvector<double, N> x)> test_fun = [](uvector<double, N> x) { return std::pow(x(2) + x(1) + x(0), 3);};
+
+    solver.mult_D(test_fun);
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");
