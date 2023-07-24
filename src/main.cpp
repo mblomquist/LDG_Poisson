@@ -34,9 +34,12 @@ int main() {
     solver.compute_D();
 //    solver.print_Dmat();
 
-    std::function<double(uvector<double, N> x)> test_fun = [](uvector<double, N> x) { return std::pow(x(2) + x(1) + x(0), 3);};
+    std::function<double(uvector<double, N> x)> fun = [](uvector<double, N> x) { return x(0)*x(1)*x(2);};
+    std::function<double(uvector<double, N> x)> sol_dx = [](uvector<double, N> x) { return x(1)*x(2);};
+    std::function<double(uvector<double, N> x)> sol_dy = [](uvector<double, N> x) { return x(2)*x(0);};
+    std::function<double(uvector<double, N> x)> sol_dz = [](uvector<double, N> x) { return x(0)*x(1);};
 
-    solver.mult_D(test_fun);
+    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");

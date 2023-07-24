@@ -126,50 +126,17 @@ public:
             }
         }
 
-//        for (int dim = 1; dim < N; ++dim) {
-//            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
-//            {
-//                std::cout << i() << " " << fold<P, N>(i()) << " | ";
-//                for (int j = 0; j < P; ++j) {
-//                        D(dim)(fold<P, N>(i()), fold<P, N>(i()) % P + j * ipow(P, N - 1)) =
-//                                D_1d(i(dim)%P,j);
-//                    std::cout << D_1d(i(dim)%P,j) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-//            std::cout << std::endl;
-//        }
-//
-//        for (int dim = 0; dim < N-1; ++dim) {
-//            for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
-//            {
-//                std::cout << i() << " " << fold<P, N>(i()) << " | ";
-//                for (int j = 1; j < P; ++j) {
-//                    D(dim)(fold<P, N>(i()), fold<P, N>(i()) + j) =
-//                            D_1d(i(dim)%P,(i(dim)+j)%P);
-//                    std::cout << D_1d(i(dim)%P,j) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-//            std::cout << std::endl;
-//        }
-
         for (int dim = 0; dim < N; ++dim) {
             for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
             {
-                std::cout << i() << " " << fold<P, N>(i()) << " | ";
                 for (int j = 0; j < P; ++j) {
                     algoim::uvector<int, N> indx = i();
                     indx(dim) = j;
                     D(dim)(fold<P, N>(i()), fold<P, N>(indx)) =
                             D_1d(i(dim),j);
-                    std::cout << D_1d(i(dim),j) << " ";
                 }
-                std::cout << std::endl;
             }
-            std::cout << std::endl;
         }
-
     }
 
     void print_Dmat()
@@ -187,27 +154,28 @@ public:
         }
     }
 
-    void mult_D(std::function<double(algoim::uvector<double, N> x)> func)
+    void mult_D(std::function<double(algoim::uvector<double, N> x)> func,
+                std::function<double(algoim::uvector<double, N> x)> soln_dx,
+                std::function<double(algoim::uvector<double, N> x)> soln_dy,
+                std::function<double(algoim::uvector<double, N> x)> soln_dz)
     {
-        algoim::uvector<double, ipow(P,N)> coeffs;
-        l2_projection_on_reference_element<P,N>(func, coeffs);
+        algoim::uvector<double, ipow(P,N)> func_c;
+        l2_projection_on_reference_element<P,N>(func, func_c);
 
-        algoim::uvector<double, ipow(P,N)> results;
+        algoim::uvector<double, ipow(P,N)> soln_cx, soln_cy, soln_cz;
+        l2_projection_on_reference_element<P,N>(soln_dx, soln_cx);
+        l2_projection_on_reference_element<P,N>(soln_dy, soln_cy);
+        l2_projection_on_reference_element<P,N>(soln_dz, soln_cz);
 
-        for (int dim = 0; dim < N; ++dim) {
-            results = matvec(D(dim), coeffs);
+        algoim::uvector<double, ipow(P,N)> func_dx, func_dy, func_dz;
 
-            std::cout << "dx_" << dim << std::endl;
-            for (int i = 0; i < ipow(P, N); ++i) {
-                if (std::abs(results(i)) > 1.0e-12){
-                    std::cout << results(i) << ", ";
-                } else {
-                    std::cout << "0, ";
-                }
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
+        func_dx = matvec(D(0), func_c);
+        func_dy = matvec(D(1), func_c);
+        func_dz = matvec(D(2), func_c);
+
+        std::cout << "Difference dx: " << algoim::sqrnorm(func_dx - soln_cx) << std::endl;
+        std::cout << "Difference dy: " << algoim::sqrnorm(func_dy - soln_cy) << std::endl;
+        std::cout << "Difference dz: " << algoim::sqrnorm(func_dz - soln_cz) << std::endl;
     }
 
     void print_grid(const std::string& filename)
