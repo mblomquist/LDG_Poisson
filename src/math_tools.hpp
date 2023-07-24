@@ -17,4 +17,6 @@ constexpr int ipow(int base, int exponent)
 }
 
 
+
+
 #endif //DG_UTILS_MATH_TOOLS_HPP

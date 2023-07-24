@@ -15,16 +15,36 @@
 #include <functional>
 
 template<int P, int N>
-int unfold(const algoim::uvector<int, N> indx_t)
+int fold(const algoim::uvector<int, N> indx_t)
 {
-    int indx_f = 0;
+    int indx = 0;
 
-    for (int i = 0; i < N; ++i)
+    for (int dim = 0; dim < N; ++dim)
     {
-        indx_f += indx_t(i) * ipow(P,i);
+        indx += indx_t(dim) * ipow(P, dim);
     }
 
-    return indx_f;
+    return indx;
+}
+
+template<int P, int N>
+algoim::uvector<int, N> unfold(int indx)
+{
+    algoim::uvector<int, N> indx_t = 0;
+
+    indx_t(N-1) = indx / ipow(P,N-1);
+
+    for (int dim = N-2; dim > 0; --dim) {
+        int temp = indx;
+        for (int i = dim+1; i < N; ++i) {
+            temp -= indx_t(i) * ipow(P,i);
+        }
+        indx_t(dim) = temp / ipow(P,dim);
+    }
+
+    indx_t(0) = indx % P;
+
+    return indx_t;
 }
 
 template<int P>
@@ -67,7 +87,7 @@ void compute_basis_at_point(algoim::uvector<double, ipow(P,N)> &basis_Nd,
         for (int dim = 0; dim < N; ++dim) {
             prod *= basis_1d(dim)(i(dim));
         }
-        basis_Nd(unfold<P,N>(i())) = prod;
+        basis_Nd(fold<P, N>(i())) = prod;
     }
 
 }
@@ -94,9 +114,9 @@ void l2_projection_on_reference_element(const std::function<double(const algoim:
             pos(dim) = quad.x(Q,i(dim));
         }
 
-        compute_basis_at_point<P,N>(fat_basis(unfold<Q,N>(i())), pos);
+        compute_basis_at_point<P,N>(fat_basis(fold<Q, N>(i())), pos);
 
-        p_fun += fat_basis(unfold<Q,N>(i())) * weights * func(pos);
+        p_fun += fat_basis(fold<Q, N>(i())) * weights * func(pos);
 
     }
 
@@ -120,7 +140,7 @@ double evaluate_basis_at_point(algoim::uvector<double, ipow(P,N)> coeff,
         for (int dim = 0; dim < N; ++dim) {
             prod *= basis(dim)(i(dim));
         }
-        sum += coeff(unfold<P,N>(i())) * prod;
+        sum += coeff(fold<P, N>(i())) * prod;
     }
 
     return sum;
