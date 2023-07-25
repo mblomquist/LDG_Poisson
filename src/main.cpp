@@ -4,6 +4,7 @@
 #include "uvector.hpp"
 #include "grid.hpp"
 #include "Poisson.hpp"
+#include "scratch.hpp"
 
 #define PI 3.14159265358979323846
 
@@ -15,31 +16,42 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 5;
-    constexpr int N = 3;
+    constexpr int P = 3;
+    constexpr int N = 2;
 
-    std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements = 3;
-    algoim::uvector<double, N> domain_min = -1.;
-    algoim::uvector<double, N> domain_max =  1.;
-
-    PoissonSolver<P,N> solver;
-
-    solver.set_domain(domain_min, domain_max);
-    solver.set_elements_per_dim(elements);
-
-    solver.get_domain();
-    std::cout << std::endl;
-
-    solver.compute_D();
+//    std::cout << "\n--- Create a grid --- \n" << std::endl;
+//    algoim::uvector<int, N> elements = 3;
+//    algoim::uvector<double, N> domain_min = -1.;
+//    algoim::uvector<double, N> domain_max =  1.;
+//
+//    PoissonSolver<P,N> solver;
+//
+//    solver.set_domain(domain_min, domain_max);
+//    solver.set_elements_per_dim(elements);
+//
+//    solver.get_domain();
+//    std::cout << std::endl;
+//
+//    solver.compute_D();
 //    solver.print_Dmat();
 
-    std::function<double(uvector<double, N> x)> fun = [](uvector<double, N> x) { return x(0)*x(0)*x(1)*x(2);};
-    std::function<double(uvector<double, N> x)> sol_dx = [](uvector<double, N> x) { return 2*x(0)*x(1)*x(2);};
-    std::function<double(uvector<double, N> x)> sol_dy = [](uvector<double, N> x) { return x(0)*x(2)*x(0);};
-    std::function<double(uvector<double, N> x)> sol_dz = [](uvector<double, N> x) { return x(0)*x(0)*x(1);};
+//    std::function<double(uvector<double, N> x)> fun = [](uvector<double, N> x) { return x(0)*x(0)*x(1)*x(2);};
+//    std::function<double(uvector<double, N> x)> sol_dx = [](uvector<double, N> x) { return 2*x(0)*x(1)*x(2);};
+//    std::function<double(uvector<double, N> x)> sol_dy = [](uvector<double, N> x) { return x(0)*x(2)*x(0);};
+//    std::function<double(uvector<double, N> x)> sol_dz = [](uvector<double, N> x) { return x(0)*x(0)*x(1);};
+//
+//    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 
-    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
+//    suppressed_multiloop();
+
+    std::function<double(uvector<double, N> x)> ufun = [](uvector<double, N> x) { return x(0)*x(0);};
+    std::function<double(uvector<double, N> x)> vfun = [](uvector<double, N> x) { return 1+x(0);};
+
+    double sum = evaluate_face_integral(ufun, vfun);
+    std::cout << "\nIntegral: " << sum << std::endl;
+
+
+    compute_basis_quadrature<P,N>();
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");

@@ -147,7 +147,7 @@ double evaluate_basis_at_point(algoim::uvector<double, ipow(P,N)> coeff,
 }
 
 template<int P, int N>
-algoim::uvector<double, ipow(P,N)> evaluate_E_at_point(algoim::uvector<double, N> pt)
+algoim::uvector<double, ipow(P,N)> evaluate_basis_at_point_on_face(algoim::uvector<double, N> pt)
 {
     algoim::uvector<algoim::uvector<double,P>, N> basis = 0.;
     algoim::uvector<double, ipow(P,N)> y;
@@ -164,7 +164,7 @@ algoim::uvector<double, ipow(P,N)> evaluate_E_at_point(algoim::uvector<double, N
         for (int dim = 0; dim < N; ++dim) {
             prod *= basis(dim)(i(dim));
         }
-        y(unfold<P,N>(i()))= prod;
+        y(fold<P,N>(i()))= prod;
     }
 
     return y;

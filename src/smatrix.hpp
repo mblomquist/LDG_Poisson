@@ -42,6 +42,24 @@ public:
         return *this;
     }
 
+    smatrix& operator+ (const smatrix& x)
+    {
+        for (int i = 0; i < M*N; ++i) {
+            data_[i] += x.data_[i];
+        }
+
+        return *this;
+    }
+
+    smatrix& operator+= (const smatrix& x)
+    {
+        for (int i = 0; i < M*N; ++i) {
+            data_[i] += x.data_[i];
+        }
+
+        return *this;
+    }
+
     smatrix& operator* (const double x)
     {
         for (int i = 0; i < M*N; ++i) {
@@ -69,6 +87,20 @@ smatrix<double, M, O> matmat(const smatrix<double, M, N> &A, const smatrix<doubl
     }
 
     return C;
+}
+
+template<int N>
+smatrix<double, N> outer_prod(const algoim::uvector<double,N> &a, const algoim::uvector<double,N> &b)
+{
+    smatrix<double, N> prod;
+
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            prod(i,j) = a(i) * b(j);
+        }
+    }
+
+    return prod;
 }
 
 template<int M, int N>
