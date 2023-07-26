@@ -98,20 +98,6 @@ double evaluate_face_integral(std::function<double(algoim::uvector<double, N> x)
 }
 
 template<int P, int N>
-void print_smatrix(smatrix<double, ipow(P,N)> A)
-{
-    for (int i = 0; i < ipow(P, N); ++i) {
-        for (int j = 0; j < ipow(P, N); ++j) {
-            if (std::abs(A(i,j)) > 1.0e-12)
-                std::cout << A(i, j) << " ";
-            else
-                std::cout << "0 ";
-        }
-        std::cout << std::endl;
-    }
-}
-
-template<int P, int N>
 void compute_basis_quadrature()
 {
     GaussQuad quad;

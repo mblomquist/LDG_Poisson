@@ -60,8 +60,6 @@ public:
         return *this;
     }
 
-
-
     smatrix& operator* (const double x)
     {
         for (int i = 0; i < M*N; ++i) {
@@ -140,6 +138,20 @@ smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
     }
 
     return K;
+}
+
+template<int P, int N>
+void print_smatrix(smatrix<double, ipow(P,N)> A)
+{
+    for (int i = 0; i < ipow(P, N); ++i) {
+        for (int j = 0; j < ipow(P, N); ++j) {
+            if (std::abs(A(i,j)) > 1.0e-12)
+                std::cout << A(i, j) << " ";
+            else
+                std::cout << "0 ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 #endif //DG_UTILS_SMATRIX_HPP
