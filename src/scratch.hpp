@@ -112,7 +112,7 @@ void print_small_matrix(smatrix<double, ipow(P,N)> A)
 }
 
 template<int P, int N>
-void compute_lifting_operator_on_a_face()
+void compute_lifting_operator_on_a_face(int dim)
 {
     GaussQuad quad;
     constexpr int Q = int((2*P+1)/2)+1;
@@ -126,8 +126,6 @@ void compute_lifting_operator_on_a_face()
 
     double c1 = 1.;
     double c2 = 1.-c1;
-
-    int dim = 0;
 
     eval_pos_i(dim) = 1.;
     eval_pos_j(dim) = 0.;
@@ -167,6 +165,30 @@ void compute_lifting_operator_on_a_face()
 
 }
 
+template<int P, int N>
+void visit_all_the_faces_uniformGrid_periodic(uniformGrid<N> grid)
+{
+    algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
 
+    for (int dim = 0; dim < N; ++dim) {
+
+        for (MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
+        {
+            algoim::uvector<int, N> element_left, element_right;
+
+            element_left(dim) = (i(dim)-1 == -1) ? elements_per_dim(dim)-1 : i(dim)-1;
+            element_right(dim) = i(dim);
+
+            for (int d = 0; d < N; ++d) {
+                if (d != dim){
+                    element_left(d) = i(d);
+                    element_right(d) = i(d);
+                }
+            }
+
+            std::cout << "Dim " << dim << " Face: " << i() << " | element L/R: " << element_left << " / " << element_right << std::endl;
+        }
+    }
+}
 
 #endif //LDG_POISSON_SCRATCH_HPP

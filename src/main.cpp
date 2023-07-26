@@ -17,10 +17,10 @@ int main() {
 
     // Specify template parameters (order, dimensions)
     constexpr int P = 3;
-    constexpr int N = 2;
+    constexpr int N = 3;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements = 3;
+    algoim::uvector<int, N> elements = 2;
     algoim::uvector<double, N> domain_min = -1.;
     algoim::uvector<double, N> domain_max =  1.;
 
@@ -42,21 +42,26 @@ int main() {
 //
 //    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 
-    compute_lifting_operator_on_a_face<P, N>();
+    compute_lifting_operator_on_a_face<P, N>(0);
 
-    char output_grid[100];
-    sprintf(output_grid, "../out/grid.vtk");
-    solver.print_grid(output_grid);
+    std::cout << "\nVisit the faces" << std::endl;
+    uniformGrid<N> mygrid(elements, domain_min, domain_max);
+    visit_all_the_faces_uniformGrid_periodic<P,N>(mygrid);
 
 
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1);};
-    solver.project_rhs(cf_rhs);
-
-    uvector<int, N> eval_grid = 11;
-
-    char output_file[100];
-    sprintf(output_file, "../out/rhs.vtk");
-    solver.print_rhs_on_uniform_grid(eval_grid,  output_file);
+//    char output_grid[100];
+//    sprintf(output_grid, "../out/grid.vtk");
+//    solver.print_grid(output_grid);
+//
+//
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1);};
+//    solver.project_rhs(cf_rhs);
+//
+//    uvector<int, N> eval_grid = 11;
+//
+//    char output_file[100];
+//    sprintf(output_file, "../out/rhs.vtk");
+//    solver.print_rhs_on_uniform_grid(eval_grid,  output_file);
 
     return 0;
 }
