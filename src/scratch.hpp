@@ -223,12 +223,26 @@ algoim::uvector<smatrix<double, ipow(P,N)>, 4> compute_lifting_operator_on_ref_f
     return L_f_ij;
 }
 
+struct HashTuple{
+    std::size_t operator()(const std::tuple<int, int>& t) const {
+        std::size_t hash_0 = std::hash<int>()(std::get<0>(t));
+        std::size_t hash_1 = std::hash<int>()(std::get<1>(t));
+        return hash_0 ^ (hash_1 << 1);
+    }
+};
+
+struct KeyTupleEqual{
+    bool operator()(const std::tuple<int, int>& left_t, const std::tuple<int, int>& right_t) const {
+        return std::equal_to<int>()(std::get<0>(left_t), std::get<0>(right_t)) &&
+               std::equal_to<int>()(std::get<1>(left_t), std::get<1>(right_t));
+    }
+};
 
 template<int P, int N>
 void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
 {
 
-    std::unordered_map<std::tuple<int,int>, smatrix<double, ipow(P,N)>> L[N];
+    std::unordered_map<std::tuple<int,int>, smatrix<double, ipow(P,N)>, HashTuple, KeyTupleEqual> L[N];
     algoim::uvector<smatrix<double, ipow(P,N)>, 4> L_f_ij;
 
     algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
