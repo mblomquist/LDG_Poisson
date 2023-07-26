@@ -42,7 +42,7 @@ int main() {
 //
 //    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 
-    compute_basis_quadrature<P,N>();
+    compute_lifting_operator_on_a_face<P, N>();
 
     char output_grid[100];
     sprintf(output_grid, "../out/grid.vtk");

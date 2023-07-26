@@ -98,22 +98,39 @@ double evaluate_face_integral(std::function<double(algoim::uvector<double, N> x)
 }
 
 template<int P, int N>
-void compute_basis_quadrature()
+void print_small_matrix(smatrix<double, ipow(P,N)> A)
+{
+    for (int i = 0; i < ipow(P, N); ++i) {
+        for (int j = 0; j < ipow(P, N); ++j) {
+            if (std::abs(A(i,j)) > 1.0e-12)
+                std::cout << A(i, j) << " ";
+            else
+                std::cout << "0 ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+template<int P, int N>
+void compute_lifting_operator_on_a_face()
 {
     GaussQuad quad;
     constexpr int Q = int((2*P+1)/2)+1;
 
-    smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
+    smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj, L_f_ij;
 
     uvector<double, ipow(P,N)> eval_i, eval_j;
 
     uvector<double, N> eval_pos_i, eval_pos_j;
     uvector<double, N-1> pos_Dmo;
 
+    double c1 = 1.;
+    double c2 = 1.-c1;
+
     int dim = 0;
 
-    eval_pos_i(dim) = 1.; // element to the left of the face
-    eval_pos_j(dim) = 0.; // element to the right of the face
+    eval_pos_i(dim) = 1.;
+    eval_pos_j(dim) = 0.;
 
     for (MultiLoop<N-1> i(0, Q); ~i; ++i) {
         double weight = 1.;
@@ -143,17 +160,10 @@ void compute_basis_quadrature()
 
     }
 
-    std::cout << "\nA_ii:" << std::endl;
-    print_smatrix<P,N>(A_ii);
+    L_f_ij = (c1-1.)*A_ii + c2*A_ij - c1*A_ij - (c2-1.)*A_jj;
 
-    std::cout << "\nA_ij:" << std::endl;
-    print_smatrix<P,N>(A_ij);
-
-    std::cout << "\nA_ji:" << std::endl;
-    print_smatrix<P,N>(A_ji);
-
-    std::cout << "\nA_jj:" << std::endl;
-    print_smatrix<P,N>(A_jj);
+    std::cout << "\nL_f_ij:" << std::endl;
+    print_small_matrix<P,N>(L_f_ij);
 
 }
 

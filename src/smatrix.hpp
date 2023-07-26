@@ -42,13 +42,24 @@ public:
         return *this;
     }
 
-    smatrix& operator+ (const smatrix& x)
+    smatrix<T, M, N> operator+ (const smatrix& x) const
     {
+        smatrix<T, M, N> result;
         for (int i = 0; i < M*N; ++i) {
-            data_[i] += x.data_[i];
+            result.data_[i] = data_[i] + x.data_[i];
         }
 
-        return *this;
+        return result;
+    }
+
+    smatrix<T, M, N> operator- (const smatrix& x) const
+    {
+        smatrix<T, M, N> result;
+        for (int i = 0; i < M*N; ++i) {
+            result.data_[i] = data_[i] - x.data_[i];
+        }
+
+        return result;
     }
 
     smatrix& operator+= (const smatrix& x)
@@ -60,13 +71,23 @@ public:
         return *this;
     }
 
-    smatrix& operator* (const double x)
+    smatrix& operator-= (const smatrix& x)
     {
         for (int i = 0; i < M*N; ++i) {
-            data_[i] *= x;
+            data_[i] -= x.data_[i];
         }
 
         return *this;
+    }
+
+    smatrix<double, M, N> operator* (const double x) const
+    {
+        smatrix<double, M, N> result;
+        for (int i = 0; i < M*N; ++i) {
+                result.data_[i] = data_[i] * x;
+        }
+
+        return result;
     }
 
     smatrix& operator*= (const double x)
@@ -79,6 +100,18 @@ public:
     }
 
 };
+
+template<int M, int N>
+smatrix<double, M, N> operator* (const double x, const smatrix<double, M, N> A)
+{
+    smatrix<double, M, N> result;
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < N; ++j) {
+            result(i,j) = x * A(i,j);
+        }
+    }
+    return result;
+}
 
 template<int M, int N, int O>
 smatrix<double, M, O> matmat(const smatrix<double, M, N> &A, const smatrix<double, N, O> &B)
@@ -140,18 +173,6 @@ smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
     return K;
 }
 
-template<int P, int N>
-void print_smatrix(smatrix<double, ipow(P,N)> A)
-{
-    for (int i = 0; i < ipow(P, N); ++i) {
-        for (int j = 0; j < ipow(P, N); ++j) {
-            if (std::abs(A(i,j)) > 1.0e-12)
-                std::cout << A(i, j) << " ";
-            else
-                std::cout << "0 ";
-        }
-        std::cout << std::endl;
-    }
-}
+
 
 #endif //DG_UTILS_SMATRIX_HPP
