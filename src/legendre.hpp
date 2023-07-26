@@ -123,16 +123,14 @@ void l2_projection_on_reference_element(const std::function<double(const algoim:
 }
 
 template<int P, int N>
-double evaluate_basis_at_point(algoim::uvector<double, ipow(P,N)> coeff,
-                               algoim::uvector<double, N> pt)
+algoim::uvector<double, ipow(P,N)> evaluate_basis_as_point(algoim::uvector<double, N> pt)
 {
     algoim::uvector<algoim::uvector<double,P>, N> basis = 0.;
+    algoim::uvector<double, ipow(P,N)> multi_basis;
 
     for (int dim = 0; dim < N; ++dim) {
         evaluate_shifted_legendre<P>(pt(dim), basis(dim));
     }
-
-    double sum = 0.;
 
     for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
     {
@@ -140,34 +138,28 @@ double evaluate_basis_at_point(algoim::uvector<double, ipow(P,N)> coeff,
         for (int dim = 0; dim < N; ++dim) {
             prod *= basis(dim)(i(dim));
         }
-        sum += coeff(fold<P, N>(i())) * prod;
+        multi_basis(fold<P,N>(i()))= prod;
+    }
+
+    return multi_basis;
+}
+
+template<int P, int N>
+double compute_basis_coefficients_at_point(algoim::uvector<double, ipow(P, N)> coeff,
+                                           algoim::uvector<double, N> pt)
+{
+    algoim::uvector<double, ipow(P,N)> basis = evaluate_basis_as_point<P,N>(pt);
+
+    double sum = 0.;
+
+    for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
+    {
+        sum += coeff(fold<P, N>(i())) * basis(fold<P,N>(i()));
     }
 
     return sum;
 }
 
-template<int P, int N>
-algoim::uvector<double, ipow(P,N)> evaluate_basis_at_point_on_face(algoim::uvector<double, N> pt)
-{
-    algoim::uvector<algoim::uvector<double,P>, N> basis = 0.;
-    algoim::uvector<double, ipow(P,N)> y;
 
-    for (int dim = 0; dim < N; ++dim) {
-        evaluate_shifted_legendre<P>(pt(dim), basis(dim));
-    }
-
-    double sum = 0.;
-
-    for (algoim::MultiLoop<N> i(0,P); ~i; ++i)
-    {
-        double prod = 1.;
-        for (int dim = 0; dim < N; ++dim) {
-            prod *= basis(dim)(i(dim));
-        }
-        y(fold<P,N>(i()))= prod;
-    }
-
-    return y;
-}
 
 #endif //DG_UTILS_LEGENDRE_HPP

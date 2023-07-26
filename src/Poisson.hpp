@@ -104,7 +104,8 @@ public:
 
             ref_pos = grid.map_pos_to_ref_element(eval_position);
 
-            point_data[evalGrid.get_node_id(i())] = evaluate_basis_at_point<P,N>(basis_coeffs[basis_indx], ref_pos);
+            point_data[evalGrid.get_node_id(i())] = compute_basis_coefficients_at_point<P, N>(basis_coeffs[basis_indx],
+                                                                                                      ref_pos);
 
         }
 

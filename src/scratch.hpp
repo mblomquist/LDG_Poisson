@@ -102,7 +102,10 @@ void print_smatrix(smatrix<double, ipow(P,N)> A)
 {
     for (int i = 0; i < ipow(P, N); ++i) {
         for (int j = 0; j < ipow(P, N); ++j) {
-            std::cout << A(i, j) << " ";
+            if (std::abs(A(i,j)) > 1.0e-12)
+                std::cout << A(i, j) << " ";
+            else
+                std::cout << "0 ";
         }
         std::cout << std::endl;
     }
@@ -112,7 +115,7 @@ template<int P, int N>
 void compute_basis_quadrature()
 {
     GaussQuad quad;
-    constexpr int Q = int((2.*P+1.)/2.)+1;
+    constexpr int Q = int((2*P+1)/2)+1;
 
     smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
 
@@ -126,7 +129,7 @@ void compute_basis_quadrature()
     eval_pos_i(dim) = 1.; // element to the left of the face
     eval_pos_j(dim) = 0.; // element to the right of the face
 
-    for (MultiLoop<N - 1> i(0, Q); ~i; ++i) {
+    for (MultiLoop<N-1> i(0, Q); ~i; ++i) {
         double weight = 1.;
 
         for (int j = 0; j < N - 1; ++j) {
@@ -137,20 +140,21 @@ void compute_basis_quadrature()
         int t = 0;
         for (int j = 0; j < N; ++j) {
             if (j != dim) {
-                eval_pos_i(j) = pos_Dmo(j);
-                eval_pos_j(j) = pos_Dmo(j);
+                eval_pos_i(j) = pos_Dmo(t);
+                eval_pos_j(j) = pos_Dmo(t);
                 ++t;
             }
 
         }
 
-        eval_i = evaluate_basis_at_point_on_face<P, N>(eval_pos_i);
-        eval_j = evaluate_basis_at_point_on_face<P, N>(eval_pos_j);
+        eval_i = evaluate_basis_as_point<P, N>(eval_pos_i);
+        eval_j = evaluate_basis_as_point<P, N>(eval_pos_j);
 
-        A_ii += outer_prod(eval_i, eval_i);
-        A_ij += outer_prod(eval_i, eval_j);
-        A_ji += outer_prod(eval_j, eval_i);
-        A_jj += outer_prod(eval_j, eval_j);
+        A_ii += outer_prod(eval_i, eval_i) * weight;
+        A_ij += outer_prod(eval_i, eval_j) * weight;
+        A_ji += outer_prod(eval_j, eval_i) * weight;
+        A_jj += outer_prod(eval_j, eval_j) * weight;
+
     }
 
     std::cout << "\nA_ii:" << std::endl;

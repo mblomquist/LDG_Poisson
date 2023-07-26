@@ -60,6 +60,8 @@ public:
         return *this;
     }
 
+
+
     smatrix& operator* (const double x)
     {
         for (int i = 0; i < M*N; ++i) {
@@ -69,7 +71,14 @@ public:
         return *this;
     }
 
+    smatrix& operator*= (const double x)
+    {
+        for (int i = 0; i < M*N; ++i) {
+            data_[i] *= x;
+        }
 
+        return *this;
+    }
 
 };
 
