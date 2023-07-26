@@ -46,8 +46,7 @@ int main() {
 
     std::cout << "\nVisit the faces" << std::endl;
     uniformGrid<N> mygrid(elements, domain_min, domain_max);
-    visit_all_the_faces_uniformGrid_periodic<P,N>(mygrid);
-
+    compute_lifting_operator_periodic_grid<P, N>(mygrid);
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");

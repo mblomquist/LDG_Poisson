@@ -165,28 +165,100 @@ void compute_lifting_operator_on_a_face(int dim)
 
 }
 
+
 template<int P, int N>
-void visit_all_the_faces_uniformGrid_periodic(uniformGrid<N> grid)
+algoim::uvector<smatrix<double, ipow(P,N)>, 4> compute_lifting_operator_on_ref_face(int dim)
 {
+    GaussQuad quad;
+    constexpr int Q = int((2*P+1)/2)+1;
+
+    algoim::uvector<smatrix<double, ipow(P,N)>, 4> L_f_ij;
+
+    smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
+
+    uvector<double, ipow(P,N)> eval_i, eval_j;
+
+    uvector<double, N> eval_pos_i, eval_pos_j;
+    uvector<double, N-1> pos_Dmo;
+
+    double c1 = 1.;
+    double c2 = 1.-c1;
+
+    eval_pos_i(dim) = 1.;
+    eval_pos_j(dim) = 0.;
+
+    for (MultiLoop<N-1> i(0, Q); ~i; ++i) {
+        double weight = 1.;
+
+        for (int j = 0; j < N - 1; ++j) {
+            pos_Dmo(j) = quad.x(Q, i(j));
+            weight *= quad.w(Q, i(j));
+        }
+
+        int t = 0;
+        for (int j = 0; j < N; ++j) {
+            if (j != dim) {
+                eval_pos_i(j) = pos_Dmo(t);
+                eval_pos_j(j) = pos_Dmo(t);
+                ++t;
+            }
+
+        }
+
+        eval_i = evaluate_basis_as_point<P, N>(eval_pos_i);
+        eval_j = evaluate_basis_as_point<P, N>(eval_pos_j);
+
+        A_ii += outer_prod(eval_i, eval_i) * weight;
+        A_ij += outer_prod(eval_i, eval_j) * weight;
+        A_ji += outer_prod(eval_j, eval_i) * weight;
+        A_jj += outer_prod(eval_j, eval_j) * weight;
+
+    }
+
+    L_f_ij(0) = A_ii;
+    L_f_ij(1) = A_ij;
+    L_f_ij(2) = A_ji;
+    L_f_ij(3) = A_jj;
+
+    return L_f_ij;
+}
+
+
+template<int P, int N>
+void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
+{
+
+    std::unordered_map<std::tuple<int,int>, smatrix<double, ipow(P,N)>> L[N];
+    algoim::uvector<smatrix<double, ipow(P,N)>, 4> L_f_ij;
+
     algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
+
+    double c1 = 1.;
+    double c2 = 1.-c1;
 
     for (int dim = 0; dim < N; ++dim) {
 
         for (MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
         {
-            algoim::uvector<int, N> element_left, element_right;
+            algoim::uvector<int, N> element_i, element_j;
 
-            element_left(dim) = (i(dim)-1 == -1) ? elements_per_dim(dim)-1 : i(dim)-1;
-            element_right(dim) = i(dim);
+            element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
+            element_j(dim) = i(dim);
 
             for (int d = 0; d < N; ++d) {
                 if (d != dim){
-                    element_left(d) = i(d);
-                    element_right(d) = i(d);
+                    element_i(d) = i(d);
+                    element_j(d) = i(d);
                 }
             }
 
-            std::cout << "Dim " << dim << " Face: " << i() << " | element L/R: " << element_left << " / " << element_right << std::endl;
+            L_f_ij = compute_lifting_operator_on_ref_face<P,N>(dim);
+
+            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.)*L_f_ij(0);
+            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2*L_f_ij(1);
+            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1*L_f_ij(2);
+            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2)*L_f_ij(3);
+
         }
     }
 }
