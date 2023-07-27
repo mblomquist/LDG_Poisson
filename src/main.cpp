@@ -17,7 +17,7 @@ int main() {
 
     // Specify template parameters (order, dimensions)
     constexpr int P = 3;
-    constexpr int N = 3;
+    constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
     algoim::uvector<int, N> elements = 2;
@@ -42,7 +42,6 @@ int main() {
 //
 //    solver.mult_D(fun, sol_dx, sol_dy, sol_dz);
 
-    compute_lifting_operator_on_a_face<P, N>(0);
 
     std::cout << "\nVisit the faces" << std::endl;
     uniformGrid<N> mygrid(elements, domain_min, domain_max);
