@@ -8,6 +8,8 @@
 #include <cmath>
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "legendre.hpp"
 #include "uvector.hpp"
@@ -240,26 +242,34 @@ void compute_lifting_operator_on_ref_face(int dim,
     }
 }
 
-struct HashTuple{
-    std::size_t operator()(const std::tuple<int, int>& t) const {
-        std::size_t hash_0 = std::hash<int>()(std::get<0>(t));
-        std::size_t hash_1 = std::hash<int>()(std::get<1>(t));
-        return hash_0 ^ (hash_1 << 1);
-    }
+struct int_pair
+{
+            int i, j;
+
+            bool operator==(const int_pair& other) const noexcept
+            {
+                return i == other.i && j == other.j;
+            }
 };
 
-struct KeyTupleEqual{
-    bool operator()(const std::tuple<int, int>& left_t, const std::tuple<int, int>& right_t) const {
-        return std::equal_to<int>()(std::get<0>(left_t), std::get<0>(right_t)) &&
-               std::equal_to<int>()(std::get<1>(left_t), std::get<1>(right_t));
-    }
-};
+namespace std
+{
+    template<>
+    struct hash<int_pair>
+    {
+        std::size_t operator()(const int_pair& x) const noexcept
+        {
+            static_assert(sizeof(int_pair)==8);
+            return std::hash<int64_t>{}(int64_t(x.i) << 32 | int64_t(x.j));
+        }
+    };
+}
 
 template<int P, int N>
 void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
 {
 
-    std::unordered_map<std::tuple<int,int>, smatrix<double, ipow(P,N)>, HashTuple, KeyTupleEqual> L[N];
+    std::unordered_map<int_pair, smatrix<double, ipow(P,N)>> L[N];
     smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
 
     algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
@@ -268,6 +278,13 @@ void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
     double c2 = 1.-c1;
 
     for (int dim = 0; dim < N; ++dim) {
+
+        double dv = 1;
+
+        for (int d = 0; d < N; ++d) {
+            if (d != dim)
+                dv *= grid.get_dx(d);
+        }
 
         for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
         {
@@ -285,10 +302,10 @@ void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
 
             compute_lifting_operator_on_ref_face<P,N>(dim, A_ii, A_ij, A_ji, A_jj);
 
-            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.) * A_ii;
-            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2 * A_ij;
-            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1 * A_ji;
-            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2) * A_jj;
+            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.) * A_ii * dv;
+            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2 * A_ij * dv;
+            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1 * A_ji * dv;
+            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2) * A_jj * dv;
 
         }
     }

@@ -158,11 +158,6 @@ void compute_lifting_operator_on_a_face(int dim)
 
     }
 
-    L_f_ij = (c1-1.)*A_ii + c2*A_ij - c1*A_ij - (c2-1.)*A_jj;
-
-    std::cout << "\nL_f_ij:" << std::endl;
-    print_small_matrix<P,N>(L_f_ij);
-
 }
 
 
