@@ -181,9 +181,6 @@ algoim::uvector<smatrix<double, ipow(P,N)>, 4> compute_lifting_operator_on_ref_f
     uvector<double, N> eval_pos_i, eval_pos_j;
     uvector<double, N-1> pos_Dmo;
 
-    double c1 = 1.;
-    double c2 = 1.-c1;
-
     eval_pos_i(dim) = 1.;
     eval_pos_j(dim) = 0.;
 
