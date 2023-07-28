@@ -428,6 +428,36 @@ public:
             }
         }
     }
+
+    void print_gradient_operator_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print a header
+        for (int dim = 0; dim < N; ++dim) {
+            file << "G_" << dim << ((dim == N-1) ? "" : ",");
+        }
+        file << std::endl;
+
+        for (int i = 0; i < grid.get_total_elements()*ipow(P,N); ++i) {
+            for (int j = 0; j < grid.get_total_elements()*ipow(P,N); ++j) {
+
+                int e_i = int(i/ipow(P,N));
+                int e_j = int(j/ipow(P,N));
+
+                int s_i = i % ipow(P,N);
+                int s_j = j % ipow(P,N);
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << G[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
+                }
+                file << std::endl;
+            }
+        }
+
+
+    }
+
 };
 
 

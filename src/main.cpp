@@ -16,7 +16,7 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 3;
+    constexpr int P = 4;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
@@ -30,9 +30,14 @@ int main() {
     solver.set_elements_per_dim(elements);
     solver.construct_gradient_operator();
 
-    solver.print_Dmat();
-    solver.print_lifting_operator();
-    solver.print_gradient_operator();
+//    solver.print_Dmat();
+//    solver.print_lifting_operator();
+//    solver.print_gradient_operator();
+
+    char output_grad[100];
+    sprintf(output_grad, "../out/gradient.csv");
+    solver.print_gradient_operator_to_file(output_grad);
+
 //
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");
