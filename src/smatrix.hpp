@@ -99,6 +99,16 @@ public:
         return *this;
     }
 
+    void print()
+    {
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                std::cout << ((std::abs(data_[i*N+j]) > 1.e-12) ? data_[i*N+j] : 0.) << ((j == N-1) ? ";" : ", ");
+            }
+            std::cout << std::endl;
+        }
+    }
+
 };
 
 template<int M, int N>

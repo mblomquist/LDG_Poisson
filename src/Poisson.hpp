@@ -71,7 +71,7 @@ public:
     PoissonSolver()
     {
         boundary_conditions = 0;
-        grid.is_periodic = true;
+        grid.set_periodic(true);
     }
 
     void set_domain(algoim::uvector<double, N> domain_min_,
@@ -100,7 +100,7 @@ public:
 
             if (bcs(dim) == 0)
             {
-                grid.is_periodic(dim) = true;
+                grid.periodic_domain(dim, true);
             }
         }
     }
@@ -165,7 +165,7 @@ public:
 
     }
 
-    void compute_D()
+    void construct_broken_gradient_operator()
     {
         smatrix<double, P> D_1d;
 
@@ -194,16 +194,9 @@ public:
 
     void print_Dmat()
     {
-        std::cout << "\n\nPrinting D\n\n" << std::endl;
         for (int dim = 0; dim < N; ++dim) {
-            std::cout << "Dim " << dim << std::endl;
-            for (int i = 0; i < ipow(P, N); ++i) {
-                for (int j = 0; j < ipow(P, N); ++j) {
-                    std::cout << D(dim)(i,j) << " ";
-                }
-                std::cout << ";" << std::endl;
-            }
-            std::cout << std::endl;
+            std::cout << "\nD_" << dim << ":" << std::endl;
+            D(dim).print();
         }
     }
 
@@ -288,7 +281,7 @@ public:
         }
     }
 
-    void compute_lifting_operator_periodic_grid()
+    void construct_lifting_operator_periodic_grid()
     {
 
         smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
@@ -319,10 +312,10 @@ public:
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.) * A_ii * dv;
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2 * A_ij * dv;
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1 * A_ji * dv;
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2) * A_jj * dv;
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] += (c1-1.) * A_ii * dv;
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] += c2 * A_ij * dv;
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] += -c1 * A_ji * dv;
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] += (1.-c2) * A_jj * dv;
 
             }
         }
@@ -343,7 +336,7 @@ public:
                     dv *= grid.get_dx(d);
             }
 
-            int starting_face = (grid.is_periodic()) ? 0 : 1;
+            int starting_face = (grid.periodic_domain()) ? 0 : 1;
 
             for (algoim::MultiLoop<N> i(starting_face,elements_per_dim); ~i; ++i)
             {
@@ -369,6 +362,70 @@ public:
             }
 
             // add in dirichlet bc's
+        }
+    }
+
+    void construct_gradient_operator()
+    {
+        construct_broken_gradient_operator();
+        construct_lifting_operator_periodic_grid();
+
+        // loop through ever dimension
+        for (int dim = 0; dim < N; ++dim) {
+            // loop through every element
+            for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
+            {
+                G[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] += L[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] + D(dim) * grid.get_dx(dim);
+
+                for (int d = 0; d < N; ++d) {
+                    for (int dir = 0; dir < 2; ++dir) {
+                        if (i(dim) - 1 > -1 || grid.is_periodic(dim) == true){
+                            algoim::uvector<int, N> nbr = i();
+                            if (i(dim)-1 == -1)
+                                nbr(dim) = grid.get_elements_per_dim()(dim)-1;
+                            else
+                                --nbr(dim);
+                            G[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}] += L[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}];
+                        }
+
+                        if (i(dim)+1 < grid.get_elements_per_dim()(dim) || grid.is_periodic(dim) == true){
+                            algoim::uvector<int, N> nbr = i();
+                            if (i(dim)+1 == grid.get_elements_per_dim()(dim))
+                                nbr(dim) = 0;
+                            else
+                                ++nbr(dim);
+
+                            G[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}] += L[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void print_lifting_operator()
+    {
+        {
+            for (int dim = 0; dim < N; ++dim) {
+                for (int i = 0; i < grid.get_total_elements(); ++i) {
+                    for (int j = 0; j < grid.get_total_elements(); ++j) {
+                        std::cout << "\nL_" << dim << "(" << i << "," << j << "):" << std::endl;
+                        L[dim][{i, j}].print();
+                    }
+                }
+            }
+        }
+    }
+
+    void print_gradient_operator()
+    {
+        for (int dim = 0; dim < N; ++dim) {
+            for (int i = 0; i < grid.get_total_elements(); ++i) {
+                for (int j = 0; j < grid.get_total_elements(); ++j) {
+                    std::cout << "\nG_" << dim << "(" << i << "," << j << "):" << std::endl;
+                    G[dim][{i, j}].print();
+                }
+            }
         }
     }
 };

@@ -26,7 +26,7 @@ class uniformGrid
 
     bool print_vtk_header = false;
 
-    algoim::uvector<bool, N> is_periodic = false;
+    algoim::uvector<bool, N> periodic_domain = false;
 
     int zOrderMap(algoim::uvector<int,N> elm)
     {
@@ -121,6 +121,21 @@ public:
     {
         elements_per_dim = elements_per_dim_;
         update_dx();
+    }
+
+    void set_periodic(bool periodic = true)
+    {
+        periodic_domain = periodic;
+    }
+
+    void set_periodic(int dim, bool periodic = true)
+    {
+        periodic_domain(dim) = periodic;
+    }
+
+    bool is_periodic(int dim)
+    {
+        return periodic_domain(dim);
     }
 
     int get_element_id(algoim::uvector<int, N> k)
