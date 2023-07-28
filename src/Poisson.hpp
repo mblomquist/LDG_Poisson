@@ -19,14 +19,50 @@
 #include "grid.hpp"
 #include "smatrix.hpp"
 
+// Create struct to be used to hash a pair of integers
+struct int_pair
+{
+    int i, j;
+
+    bool operator==(const int_pair& other) const noexcept
+    {
+        return i == other.i && j == other.j;
+    }
+};
+
+// overload std lib to hash an integer pair
+namespace std
+{
+    template<>
+    struct hash<int_pair>
+    {
+        std::size_t operator()(const int_pair& x) const noexcept
+        {
+            static_assert(sizeof(int_pair)==8);
+            return std::hash<int64_t>{}(int64_t(x.i) << 32 | int64_t(x.j));
+        }
+    };
+}
+
+
 template<int P, int N>
 class PoissonSolver
 {
     uniformGrid<N> grid;
 
+    GaussQuad quad;
+
     algoim::uvector<algoim::uvector<int, 2>, N> boundary_conditions;
 
-    algoim::uvector<smatrix<double, ipow(P,N)>,N> D, L, G;
+    double c1 = 1.;
+    double c2 = 1.-c1;
+
+    double tau_i = 1;
+    double tau_d = 1;
+
+    algoim::uvector<smatrix<double, ipow(P,N)>,N> D;
+
+    std::unordered_map<int_pair,smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
     std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs;
 
@@ -35,6 +71,7 @@ public:
     PoissonSolver()
     {
         boundary_conditions = 0;
+        grid.is_periodic = true;
     }
 
     void set_domain(algoim::uvector<double, N> domain_min_,
@@ -53,6 +90,19 @@ public:
     void set_elements_per_dim(algoim::uvector<int, N> elements_per_dim_)
     {
         grid.set_elements_per_dim(elements_per_dim_);
+    }
+
+    void set_boundary_conditions( algoim::uvector<algoim::uvector<int, 2>, N> bcs)
+    {
+        for (int dim = 0; dim < N; ++dim) {
+            boundary_conditions(dim)(0) = bcs(dim)(0);
+            boundary_conditions(dim)(1) = bcs(dim)(1);
+
+            if (bcs(dim) == 0)
+            {
+                grid.is_periodic(dim) = true;
+            }
+        }
     }
 
     void l2_projection(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &projected_func,
@@ -191,124 +241,139 @@ public:
     {
         evaluate_basis_on_uniform_grid(rhs, pts_per_dim, filename, "rhs_data");
     }
-};
 
-
-template<int P, int N>
-void compute_lifting_operator_on_ref_face(int dim,
-                                          smatrix<double, ipow(P,N)> &A_ii,
-                                          smatrix<double, ipow(P,N)> &A_ij,
-                                          smatrix<double, ipow(P,N)> &A_ji,
-                                          smatrix<double, ipow(P,N)> &A_jj)
-{
-    A_ii = A_ij = A_ji = A_jj = 0.;
-
-    GaussQuad quad;
-    constexpr int Q = int((2*P+1)/2)+1;
-
-    algoim::uvector<double, ipow(P,N)> eval_i, eval_j;
-
-    algoim::uvector<double, N> eval_pos_i, eval_pos_j;
-    algoim::uvector<double, N-1> pos_Dmo;
-
-    eval_pos_i(dim) = 1.;
-    eval_pos_j(dim) = 0.;
-
-    for (algoim::MultiLoop<N-1> i(0, Q); ~i; ++i) {
-        double weight = 1.;
-
-        for (int j = 0; j < N - 1; ++j) {
-            pos_Dmo(j) = quad.x(Q, i(j));
-            weight *= quad.w(Q, i(j));
-        }
-
-        int t = 0;
-        for (int j = 0; j < N; ++j) {
-            if (j != dim) {
-                eval_pos_i(j) = pos_Dmo(t);
-                eval_pos_j(j) = pos_Dmo(t);
-                ++t;
-            }
-        }
-
-        eval_i = evaluate_basis_as_point<P, N>(eval_pos_i);
-        eval_j = evaluate_basis_as_point<P, N>(eval_pos_j);
-
-        A_ii += outer_prod(eval_i, eval_i) * weight;
-        A_ij += outer_prod(eval_i, eval_j) * weight;
-        A_ji += outer_prod(eval_j, eval_i) * weight;
-        A_jj += outer_prod(eval_j, eval_j) * weight;
-
-    }
-}
-
-struct int_pair
-{
-            int i, j;
-
-            bool operator==(const int_pair& other) const noexcept
-            {
-                return i == other.i && j == other.j;
-            }
-};
-
-namespace std
-{
-    template<>
-    struct hash<int_pair>
+    void compute_lifting_operator_on_ref_face(int dim,
+                                              smatrix<double, ipow(P,N)> &A_ii,
+                                              smatrix<double, ipow(P,N)> &A_ij,
+                                              smatrix<double, ipow(P,N)> &A_ji,
+                                              smatrix<double, ipow(P,N)> &A_jj)
     {
-        std::size_t operator()(const int_pair& x) const noexcept
-        {
-            static_assert(sizeof(int_pair)==8);
-            return std::hash<int64_t>{}(int64_t(x.i) << 32 | int64_t(x.j));
-        }
-    };
-}
+        A_ii = A_ij = A_ji = A_jj = 0.;
 
-template<int P, int N>
-void compute_lifting_operator_periodic_grid(uniformGrid<N> grid)
-{
+        constexpr int Q = int((2*P+1)/2)+1;
 
-    std::unordered_map<int_pair, smatrix<double, ipow(P,N)>> L[N];
-    smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
+        algoim::uvector<double, ipow(P,N)> eval_i, eval_j;
 
-    algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
+        algoim::uvector<double, N> eval_pos_i, eval_pos_j;
+        algoim::uvector<double, N-1> pos_Dmo;
 
-    double c1 = 1.;
-    double c2 = 1.-c1;
+        eval_pos_i(dim) = 1.;
+        eval_pos_j(dim) = 0.;
 
-    for (int dim = 0; dim < N; ++dim) {
+        for (algoim::MultiLoop<N-1> i(0, Q); ~i; ++i) {
+            double weight = 1.;
 
-        double dv = 1;
+            for (int j = 0; j < N - 1; ++j) {
+                pos_Dmo(j) = quad.x(Q, i(j));
+                weight *= quad.w(Q, i(j));
+            }
 
-        for (int d = 0; d < N; ++d) {
-            if (d != dim)
-                dv *= grid.get_dx(d);
-        }
-
-        for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
-        {
-            algoim::uvector<int, N> element_i, element_j;
-
-            element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
-            element_j(dim) = i(dim);
-
-            for (int d = 0; d < N; ++d) {
-                if (d != dim){
-                    element_i(d) = i(d);
-                    element_j(d) = i(d);
+            int t = 0;
+            for (int j = 0; j < N; ++j) {
+                if (j != dim) {
+                    eval_pos_i(j) = pos_Dmo(t);
+                    eval_pos_j(j) = pos_Dmo(t);
+                    ++t;
                 }
             }
 
-            compute_lifting_operator_on_ref_face<P,N>(dim, A_ii, A_ij, A_ji, A_jj);
+            eval_i = evaluate_basis_as_point<P, N>(eval_pos_i);
+            eval_j = evaluate_basis_as_point<P, N>(eval_pos_j);
 
-            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.) * A_ii * dv;
-            L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2 * A_ij * dv;
-            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1 * A_ji * dv;
-            L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2) * A_jj * dv;
+            A_ii += outer_prod(eval_i, eval_i) * weight;
+            A_ij += outer_prod(eval_i, eval_j) * weight;
+            A_ji += outer_prod(eval_j, eval_i) * weight;
+            A_jj += outer_prod(eval_j, eval_j) * weight;
 
         }
     }
-}
+
+    void compute_lifting_operator_periodic_grid()
+    {
+
+        smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
+
+        algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
+
+        for (int dim = 0; dim < N; ++dim) {
+
+            double dv = 1;
+            for (int d = 0; d < N; ++d) {
+                if (d != dim)
+                    dv *= grid.get_dx(d);
+            }
+
+            for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
+            {
+                algoim::uvector<int, N> element_i, element_j;
+
+                element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
+                element_j(dim) = i(dim);
+
+                for (int d = 0; d < N; ++d) {
+                    if (d != dim){
+                        element_i(d) = i(d);
+                        element_j(d) = i(d);
+                    }
+                }
+
+                compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
+
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = (c1-1.) * A_ii * dv;
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = c2 * A_ij * dv;
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = -c1 * A_ji * dv;
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = (1.-c2) * A_jj * dv;
+
+            }
+        }
+    }
+
+    void construct_penalty_operator_uniform_grid()
+    {
+
+        smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
+
+        algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
+
+        for (int dim = 0; dim < N; ++dim) {
+
+            double dv = 1;
+            for (int d = 0; d < N; ++d) {
+                if (d != dim)
+                    dv *= grid.get_dx(d);
+            }
+
+            int starting_face = (grid.is_periodic()) ? 0 : 1;
+
+            for (algoim::MultiLoop<N> i(starting_face,elements_per_dim); ~i; ++i)
+            {
+                algoim::uvector<int, N> element_i, element_j;
+
+                element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
+                element_j(dim) = i(dim);
+
+                for (int d = 0; d < N; ++d) {
+                    if (d != dim){
+                        element_i(d) = i(d);
+                        element_j(d) = i(d);
+                    }
+                }
+
+                compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
+
+                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = tau_i * A_ii * dv;
+                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = tau_i * A_ij * dv;
+                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = tau_i * A_ji * dv;
+                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = tau_i * A_jj * dv;
+
+            }
+
+            // add in dirichlet bc's
+        }
+    }
+};
+
+
+
 
 #endif //LDG_POISSON_POISSON_HPP

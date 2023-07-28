@@ -17,7 +17,7 @@ int main() {
 
     // Specify template parameters (order, dimensions)
     constexpr int P = 3;
-    constexpr int N = 3;
+    constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
     algoim::uvector<int, N> elements = 2;
@@ -46,7 +46,6 @@ int main() {
 
     std::cout << "\n--- Build the Lifting Operator --- " << std::endl;
     uniformGrid<N> mygrid(elements, domain_min, domain_max);
-    compute_lifting_operator_periodic_grid<P, N>(mygrid);
 
 //    char output_grid[100];
 //    sprintf(output_grid, "../out/grid.vtk");
