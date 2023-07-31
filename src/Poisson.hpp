@@ -301,18 +301,25 @@ public:
                     dv *= grid.get_dx(d);
             }
 
-            for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i)
-            {
+            std::cout << "\ndim: " << dim << std::endl;
+
+            for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i) {
                 algoim::uvector<int, N> element_i, element_j;
 
                 element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
                 element_j(dim) = i(dim);
 
                 for (int d = 0; d < N; ++d) {
-                    if (d != dim){
+                    if (d != dim) {
                         element_i(d) = i(d);
                         element_j(d) = i(d);
                     }
+                }
+
+                // print out elements for dim == 1
+                if (1)
+                {
+                    std::cout << i() << " elm_i: " << grid.get_element_id(element_i) << " elm_j: " << grid.get_element_id(element_j) << std::endl;
                 }
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
