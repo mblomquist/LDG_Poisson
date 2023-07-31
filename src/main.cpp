@@ -16,7 +16,7 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 4;
+    constexpr int P = 3;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
@@ -31,31 +31,20 @@ int main() {
     solver.construct_gradient_operator();
     solver.construct_penalty_operator();
 
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return sin(PI*x(0))+sin(PI*x(1));};
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -PI*PI*(sin(PI*x(0))+sin(PI*x(1)));};
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return 1.;};
     solver.project_rhs(cf_rhs);
 
     std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(PI*x(0))+sin(PI*x(1));};
     solver.project_sol(cf_sol);
 
-    char output_mass[100];
-    sprintf(output_mass, "../out/mass.csv");
-    solver.print_mass_matrix_to_file(output_mass);
+    char output_operators[100];
+    sprintf(output_operators, "../out/operators.csv");
+    solver.print_operators_to_file(output_operators);
 
-    char output_rhs[100];
-    sprintf(output_rhs, "../out/rhs.csv");
-    solver.print_rhs_to_file(output_rhs);
-
-    char output_sol[100];
-    sprintf(output_sol, "../out/sol.csv");
-    solver.print_rhs_to_file(output_sol);
-
-    char output_grad[100];
-    sprintf(output_grad, "../out/gradient.csv");
-    solver.print_gradient_operator_to_file(output_grad);
-
-    char output_penalty[100];
-    sprintf(output_penalty, "../out/penalty.csv");
-    solver.print_penalty_operator_to_file(output_penalty);
+    char output_vectors[100];
+    sprintf(output_vectors, "../out/vectors.csv");
+    solver.print_vectors_to_file(output_vectors);
 
     return 0;
 }

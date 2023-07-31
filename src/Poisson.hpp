@@ -541,6 +541,78 @@ public:
         }
     }
 
+    void print_operators_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print a header
+        for (int dim = 0; dim < N; ++dim) {
+            file << "D_" << dim << ",";
+        }
+
+        for (int dim = 0; dim < N; ++dim) {
+            file << "L_" << dim << ",";
+        }
+
+        for (int dim = 0; dim < N; ++dim) {
+            file << "G_" << dim << ",";
+        }
+
+        for (int dim = 0; dim < N; ++dim) {
+            file << "T_" << dim << ((dim == N-1) ? "" : ",");
+        }
+        file << std::endl;
+
+        for (int i = 0; i < grid.get_total_elements()*ipow(P,N); ++i) {
+            for (int j = 0; j < grid.get_total_elements()*ipow(P,N); ++j) {
+
+                int e_i = int(i/ipow(P,N));
+                int e_j = int(j/ipow(P,N));
+
+                int s_i = i % ipow(P,N);
+                int s_j = j % ipow(P,N);
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << D(dim)(s_i,s_j) << ",";
+                }
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << L[dim][{e_i,e_j}](s_i,s_j) << ",";
+                }
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << G[dim][{e_i,e_j}](s_i,s_j) << ",";
+                }
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
+                }
+
+                file << std::endl;
+            }
+        }
+    }
+
+    void print_vectors_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print header
+        file << "mass" << "," << "rhs" << "," << "sol" << std::endl;
+
+        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
+            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
+                double vol = 1.;
+                for (int dim = 0; dim < N; ++dim) {
+                    vol /= grid.get_dx(dim);
+                }
+                file << vol << "," << rhs[elm](basis_fun) << "," << sol[elm](basis_fun) << std::endl;
+            }
+        }
+
+        file.close();
+    }
+
 };
 
 
