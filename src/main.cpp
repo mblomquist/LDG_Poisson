@@ -31,12 +31,23 @@ int main() {
     solver.construct_gradient_operator();
     solver.construct_penalty_operator();
 
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return x(0)*x(1);};
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return sin(PI*x(0))+sin(PI*x(1));};
     solver.project_rhs(cf_rhs);
+
+    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(PI*x(0))+sin(PI*x(1));};
+    solver.project_sol(cf_sol);
+
+    char output_mass[100];
+    sprintf(output_mass, "../out/mass.csv");
+    solver.print_mass_matrix_to_file(output_mass);
 
     char output_rhs[100];
     sprintf(output_rhs, "../out/rhs.csv");
     solver.print_rhs_to_file(output_rhs);
+
+    char output_sol[100];
+    sprintf(output_sol, "../out/sol.csv");
+    solver.print_rhs_to_file(output_sol);
 
     char output_grad[100];
     sprintf(output_grad, "../out/gradient.csv");

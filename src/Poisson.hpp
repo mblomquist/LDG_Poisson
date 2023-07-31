@@ -64,7 +64,7 @@ class PoissonSolver
 
     std::unordered_map<int_pair,smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
-    std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs;
+    std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs, sol;
 
 public:
 
@@ -126,6 +126,11 @@ public:
     void project_rhs(const std::function<double(const algoim::uvector<double,N>&)> func)
     {
         l2_projection(rhs, func);
+    }
+
+    void project_sol(const std::function<double(const algoim::uvector<double,N>&)> func)
+    {
+        l2_projection(sol, func);
     }
 
     void evaluate_basis_on_uniform_grid(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &basis_coeffs,
@@ -440,6 +445,42 @@ public:
         for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
             for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
                 file << rhs[elm](basis_fun) << std::endl;
+            }
+        }
+
+        file.close();
+    }
+
+    void print_sol_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print header
+        file << "sol" << std::endl;
+
+        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
+            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
+                file << sol[elm](basis_fun) << std::endl;
+            }
+        }
+
+        file.close();
+    }
+
+    void print_mass_matrix_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print header
+        file << "M" << std::endl;
+
+        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
+            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
+                double vol = 1.;
+                for (int dim = 0; dim < N; ++dim) {
+                    vol /= grid.get_dx(dim);
+                }
+                file << vol << std::endl;
             }
         }
 
