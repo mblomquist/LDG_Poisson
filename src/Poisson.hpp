@@ -321,7 +321,7 @@ public:
         }
     }
 
-    void construct_penalty_operator_uniform_grid()
+    void construct_penalty_operator()
     {
 
         smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
@@ -336,7 +336,8 @@ public:
                     dv *= grid.get_dx(d);
             }
 
-            int starting_face = (grid.periodic_domain()) ? 0 : 1;
+//            int starting_face = (grid.is_periodic()) ? 0 : 1;
+            int starting_face = 0;
 
             for (algoim::MultiLoop<N> i(starting_face,elements_per_dim); ~i; ++i)
             {
@@ -429,6 +430,22 @@ public:
         }
     }
 
+    void print_rhs_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
+
+        // print header
+        file << "rhs" << std::endl;
+
+        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
+            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
+                file << rhs[elm](basis_fun) << std::endl;
+            }
+        }
+
+        file.close();
+    }
+
     void print_gradient_operator_to_file(const std::string& filename)
     {
         std::ofstream file(filename);
@@ -454,8 +471,33 @@ public:
                 file << std::endl;
             }
         }
+    }
 
+    void print_penalty_operator_to_file(const std::string& filename)
+    {
+        std::ofstream file(filename);
 
+        // print a header
+        for (int dim = 0; dim < N; ++dim) {
+            file << "T_" << dim << ((dim == N-1) ? "" : ",");
+        }
+        file << std::endl;
+
+        for (int i = 0; i < grid.get_total_elements()*ipow(P,N); ++i) {
+            for (int j = 0; j < grid.get_total_elements()*ipow(P,N); ++j) {
+
+                int e_i = int(i/ipow(P,N));
+                int e_j = int(j/ipow(P,N));
+
+                int s_i = i % ipow(P,N);
+                int s_j = j % ipow(P,N);
+
+                for (int dim = 0; dim < N; ++dim) {
+                    file << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
+                }
+                file << std::endl;
+            }
+        }
     }
 
 };
