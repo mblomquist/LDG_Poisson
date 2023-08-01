@@ -90,6 +90,16 @@ public:
         return result;
     }
 
+    smatrix<double, M, N> operator/ (const double x) const
+    {
+        smatrix<double, M, N> result;
+        for (int i = 0; i < M*N; ++i) {
+            result.data_[i] = data_[i] / x;
+        }
+
+        return result;
+    }
+
     smatrix& operator*= (const double x)
     {
         for (int i = 0; i < M*N; ++i) {

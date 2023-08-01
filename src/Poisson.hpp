@@ -10,6 +10,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <iomanip>
 
 #include "legendre.hpp"
 #include "uvector.hpp"
@@ -103,6 +104,11 @@ public:
                 grid.periodic_domain(dim, true);
             }
         }
+    }
+
+    void print_dx()
+    {
+        std::cout << grid.get_dx() << std::endl;
     }
 
     void l2_projection(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &projected_func,
@@ -294,15 +300,6 @@ public:
         algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
 
         for (int dim = 0; dim < N; ++dim) {
-
-            double dv = 1;
-            for (int d = 0; d < N; ++d) {
-                if (d != dim)
-                    dv *= grid.get_dx(d);
-            }
-
-            std::cout << "\ndim: " << dim << std::endl;
-
             for (algoim::MultiLoop<N> i(0,elements_per_dim); ~i; ++i) {
                 algoim::uvector<int, N> element_i, element_j;
 
@@ -316,18 +313,12 @@ public:
                     }
                 }
 
-                // print out elements for dim == 1
-                if (1)
-                {
-                    std::cout << i() << " elm_i: " << grid.get_element_id(element_i) << " elm_j: " << grid.get_element_id(element_j) << std::endl;
-                }
-
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] += (c1-1.) * A_ii * dv;
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] += c2 * A_ij * dv;
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] += -c1 * A_ji * dv;
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] += (1.-c2) * A_jj * dv;
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] += (c1-1.) * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] +=      c2 * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] +=     -c1 * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] += (1.-c2) * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
 
             }
         }
@@ -341,12 +332,6 @@ public:
         algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
 
         for (int dim = 0; dim < N; ++dim) {
-
-            double dv = 1;
-            for (int d = 0; d < N; ++d) {
-                if (d != dim)
-                    dv *= grid.get_dx(d);
-            }
 
 //            int starting_face = (grid.is_periodic()) ? 0 : 1;
             int starting_face = 0;
@@ -367,10 +352,10 @@ public:
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = tau_i * A_ii * dv;
-                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = tau_i * A_ij * dv;
-                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = tau_i * A_ji * dv;
-                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = tau_i * A_jj * dv;
+                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = tau_i * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
+                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = tau_i * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
+                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = tau_i * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
+                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = tau_i * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
 
             }
 
@@ -388,162 +373,12 @@ public:
             // loop through every element
             for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
             {
-                G[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] += L[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] + D(dim) * grid.get_dx(dim);
-
-                for (int d = 0; d < N; ++d) {
-                    for (int dir = 0; dir < 2; ++dir) {
-                        if (i(dim) - 1 > -1 || grid.is_periodic(dim) == true){
-                            algoim::uvector<int, N> nbr = i();
-                            if (i(dim)-1 == -1)
-                                nbr(dim) = grid.get_elements_per_dim()(dim)-1;
-                            else
-                                --nbr(dim);
-                            G[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}] += L[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}];
-                        }
-
-                        if (i(dim)+1 < grid.get_elements_per_dim()(dim) || grid.is_periodic(dim) == true){
-                            algoim::uvector<int, N> nbr = i();
-                            if (i(dim)+1 == grid.get_elements_per_dim()(dim))
-                                nbr(dim) = 0;
-                            else
-                                ++nbr(dim);
-
-                            G[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}] += L[dim][{grid.get_element_id(i()),grid.get_element_id(nbr)}];
-                        }
-                    }
+                for (algoim::MultiLoop<N> j(0,grid.get_elements_per_dim()); ~j; ++j)
+                {
+                    G[dim][{grid.get_element_id(i()), grid.get_element_id(j())}] += L[dim][{grid.get_element_id(i()), grid.get_element_id(j())}]; // + D(dim) / grid.get_dx(dim);
                 }
-            }
-        }
-    }
 
-    void print_lifting_operator()
-    {
-        {
-            for (int dim = 0; dim < N; ++dim) {
-                for (int i = 0; i < grid.get_total_elements(); ++i) {
-                    for (int j = 0; j < grid.get_total_elements(); ++j) {
-                        std::cout << "\nL_" << dim << "(" << i << "," << j << "):" << std::endl;
-                        L[dim][{i, j}].print();
-                    }
-                }
-            }
-        }
-    }
-
-    void print_gradient_operator()
-    {
-        for (int dim = 0; dim < N; ++dim) {
-            for (int i = 0; i < grid.get_total_elements(); ++i) {
-                for (int j = 0; j < grid.get_total_elements(); ++j) {
-                    std::cout << "\nG_" << dim << "(" << i << "," << j << "):" << std::endl;
-                    G[dim][{i, j}].print();
-                }
-            }
-        }
-    }
-
-    void print_rhs_to_file(const std::string& filename)
-    {
-        std::ofstream file(filename);
-
-        // print header
-        file << "rhs" << std::endl;
-
-        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
-            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
-                file << rhs[elm](basis_fun) << std::endl;
-            }
-        }
-
-        file.close();
-    }
-
-    void print_sol_to_file(const std::string& filename)
-    {
-        std::ofstream file(filename);
-
-        // print header
-        file << "sol" << std::endl;
-
-        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
-            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
-                file << sol[elm](basis_fun) << std::endl;
-            }
-        }
-
-        file.close();
-    }
-
-    void print_mass_matrix_to_file(const std::string& filename)
-    {
-        std::ofstream file(filename);
-
-        // print header
-        file << "M" << std::endl;
-
-        for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
-            for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
-                double vol = 1.;
-                for (int dim = 0; dim < N; ++dim) {
-                    vol /= grid.get_dx(dim);
-                }
-                file << vol << std::endl;
-            }
-        }
-
-        file.close();
-    }
-
-    void print_gradient_operator_to_file(const std::string& filename)
-    {
-        std::ofstream file(filename);
-
-        // print a header
-        for (int dim = 0; dim < N; ++dim) {
-            file << "G_" << dim << ((dim == N-1) ? "" : ",");
-        }
-        file << std::endl;
-
-        for (int i = 0; i < grid.get_total_elements()*ipow(P,N); ++i) {
-            for (int j = 0; j < grid.get_total_elements()*ipow(P,N); ++j) {
-
-                int e_i = int(i/ipow(P,N));
-                int e_j = int(j/ipow(P,N));
-
-                int s_i = i % ipow(P,N);
-                int s_j = j % ipow(P,N);
-
-                for (int dim = 0; dim < N; ++dim) {
-                    file << G[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
-                }
-                file << std::endl;
-            }
-        }
-    }
-
-    void print_penalty_operator_to_file(const std::string& filename)
-    {
-        std::ofstream file(filename);
-
-        // print a header
-        for (int dim = 0; dim < N; ++dim) {
-            file << "T_" << dim << ((dim == N-1) ? "" : ",");
-        }
-        file << std::endl;
-
-        for (int i = 0; i < grid.get_total_elements()*ipow(P,N); ++i) {
-            for (int j = 0; j < grid.get_total_elements()*ipow(P,N); ++j) {
-
-                int e_i = int(i/ipow(P,N));
-                int e_j = int(j/ipow(P,N));
-
-                int s_i = i % ipow(P,N);
-                int s_j = j % ipow(P,N);
-
-                for (int dim = 0; dim < N; ++dim) {
-                    file << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
-                }
-                file << std::endl;
+                G[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] += D(dim) / grid.get_dx(dim);
             }
         }
     }
@@ -580,19 +415,19 @@ public:
                 int s_j = j % ipow(P,N);
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << D(dim)(s_i,s_j) << ",";
+                    file << std::setprecision(16) << D(dim)(s_i,s_j)/grid.get_dx(dim) << ",";
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << L[dim][{e_i,e_j}](s_i,s_j) << ",";
+                    file << std::setprecision(16) << L[dim][{e_i,e_j}](s_i,s_j) << ",";
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << G[dim][{e_i,e_j}](s_i,s_j) << ",";
+                    file << std::setprecision(16) << G[dim][{e_i,e_j}](s_i,s_j) << ",";
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
+                    file << std::setprecision(16) << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
                 }
 
                 file << std::endl;
@@ -613,11 +448,31 @@ public:
                 for (int dim = 0; dim < N; ++dim) {
                     vol /= grid.get_dx(dim);
                 }
-                file << vol << "," << rhs[elm](basis_fun) << "," << sol[elm](basis_fun) << std::endl;
+                file << std::setprecision(16) << vol << ","
+                     << std::setprecision(16) << rhs[elm](basis_fun) << ","
+                     << std::setprecision(16) << sol[elm](basis_fun) << std::endl;
             }
         }
 
         file.close();
+    }
+
+
+    void inspect_lifting_operator()
+    {
+        for (int dim = 0; dim < N; ++dim) {
+            std::cout << "\nDim: " << dim << std::endl;
+
+            for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
+            {
+                for (algoim::MultiLoop<N> j(0,grid.get_elements_per_dim()); ~j; ++j)
+                {
+                    std::cout << i() << " " << j() << std::endl;
+                    L[dim][{grid.get_element_id(i()),grid.get_element_id(j())}].print();
+                    std::cout << std::endl;
+                }
+            }
+        }
     }
 
 };
