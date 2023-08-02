@@ -342,10 +342,10 @@ public:
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_i)) += (c1-1.) * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_j)) +=      c2 * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) +=     -c1 * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += (1.-c2) * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_i)) += (c1-1.) * A_ii / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_j)) +=      c2 * A_ij / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) +=     -c1 * A_ji / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += (1.-c2) * A_jj / grid.get_dx(dim);
 
             }
         }
@@ -403,7 +403,7 @@ public:
 
                 for (auto j : L[dim].row[i])
                 {
-                    G[dim](i,j) += L[dim](i,j) / prod(grid.get_dx());
+                    G[dim](i,j) += L[dim](i,j);
                 }
             }
         }
