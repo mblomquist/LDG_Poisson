@@ -45,6 +45,32 @@ namespace std
     };
 }
 
+// create a struct for the block sparse matrix format
+template<typename T>
+struct BlockSparseMatrix
+{
+    // maps (i,j) to A_ij
+    std::unordered_map<int_pair, T> A;
+
+    // maps i to the non-zero entries
+    std::unordered_map<int, std::unordered_set<int>> row;
+
+    // maps i to the non-zero entries
+    std::unordered_map<int, std::unordered_set<int>> col;
+
+    T& operator()(int i, int j)
+    {
+        row[i].insert(j);
+        col[j].insert(i);
+        return A[{i,j}];
+    }
+
+    const T& operator()(int i, int j) const
+    {
+        return A.at[{i,j}];
+    }
+};
+
 
 template<int P, int N>
 class PoissonSolver
@@ -55,7 +81,7 @@ class PoissonSolver
 
     algoim::uvector<algoim::uvector<int, 2>, N> boundary_conditions;
 
-    double c1 = 1.;
+    double c1 = 0.;
     double c2 = 1.-c1;
 
     double tau_i = 1;
@@ -63,7 +89,8 @@ class PoissonSolver
 
     algoim::uvector<smatrix<double, ipow(P,N)>,N> D;
 
-    std::unordered_map<int_pair,smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
+//    std::unordered_map<int_pair,smatrix<double, ipow(P,N)>> L[N], T[N];
+    BlockSparseMatrix<smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
     std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs, sol;
 
@@ -315,10 +342,10 @@ public:
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] += (c1-1.) * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] +=      c2 * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] +=     -c1 * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
-                L[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] += (1.-c2) * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_i)) += (c1-1.) * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_i), grid.get_element_id(element_j)) +=      c2 * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) +=     -c1 * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
+                L[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += (1.-c2) * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
 
             }
         }
@@ -352,10 +379,10 @@ public:
 
                 compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
 
-                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_i)}] = tau_i * A_ii * prod(grid.get_dx()) / grid.get_dx(dim);
-                T[dim][{grid.get_element_id(element_i), grid.get_element_id(element_j)}] = tau_i * A_ij * prod(grid.get_dx()) / grid.get_dx(dim);
-                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_i)}] = tau_i * A_ji * prod(grid.get_dx()) / grid.get_dx(dim);
-                T[dim][{grid.get_element_id(element_j), grid.get_element_id(element_j)}] = tau_i * A_jj * prod(grid.get_dx()) / grid.get_dx(dim);
+                T[dim](grid.get_element_id(element_i), grid.get_element_id(element_i)) += tau_i * A_ii / grid.get_dx(dim);
+                T[dim](grid.get_element_id(element_i), grid.get_element_id(element_j)) += tau_i * A_ij / grid.get_dx(dim);
+                T[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) += tau_i * A_ji / grid.get_dx(dim);
+                T[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += tau_i * A_jj / grid.get_dx(dim);
 
             }
 
@@ -370,15 +397,14 @@ public:
 
         // loop through ever dimension
         for (int dim = 0; dim < N; ++dim) {
-            // loop through every element
-            for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
+            for (int i = 0; i < grid.get_total_elements(); ++i)
             {
-                for (algoim::MultiLoop<N> j(0,grid.get_elements_per_dim()); ~j; ++j)
-                {
-                    G[dim][{grid.get_element_id(i()), grid.get_element_id(j())}] += L[dim][{grid.get_element_id(i()), grid.get_element_id(j())}]; // + D(dim) / grid.get_dx(dim);
-                }
+                G[dim](i,i) += D(dim) / grid.get_dx(dim);
 
-                G[dim][{grid.get_element_id(i()), grid.get_element_id(i())}] += D(dim) / grid.get_dx(dim);
+                for (auto j : L[dim].row[i])
+                {
+                    G[dim](i,j) += L[dim](i,j) / prod(grid.get_dx());
+                }
             }
         }
     }
@@ -419,15 +445,15 @@ public:
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << std::setprecision(16) << L[dim][{e_i,e_j}](s_i,s_j) << ",";
+                    file << std::setprecision(16) << L[dim](e_i,e_j)(s_i,s_j) << ",";
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << std::setprecision(16) << G[dim][{e_i,e_j}](s_i,s_j) << ",";
+                    file << std::setprecision(16) << G[dim](e_i,e_j)(s_i,s_j) << ",";
                 }
 
                 for (int dim = 0; dim < N; ++dim) {
-                    file << std::setprecision(16) << T[dim][{e_i,e_j}](s_i,s_j) << ((dim == N-1) ? "" : ",");
+                    file << std::setprecision(16) << T[dim](e_i,e_j)(s_i,s_j) << ((dim == N-1) ? "" : ",");
                 }
 
                 file << std::endl;
@@ -444,11 +470,11 @@ public:
 
         for (int elm = 0; elm < grid.get_total_elements(); ++elm) {
             for (int basis_fun = 0; basis_fun < ipow(P, N); ++basis_fun) {
-                double vol = 1.;
+                double dV = 1.;
                 for (int dim = 0; dim < N; ++dim) {
-                    vol /= grid.get_dx(dim);
+                    dV *= grid.get_dx(dim);
                 }
-                file << std::setprecision(16) << vol << ","
+                file << std::setprecision(16) << dV << ","
                      << std::setprecision(16) << rhs[elm](basis_fun) << ","
                      << std::setprecision(16) << sol[elm](basis_fun) << std::endl;
             }

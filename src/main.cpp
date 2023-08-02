@@ -16,11 +16,11 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 4;
+    constexpr int P = 2;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements = 8;
+    algoim::uvector<int, N> elements = 2;
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
 
@@ -33,12 +33,15 @@ int main() {
 
 //    solver.inspect_lifting_operator();
 
-//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return 2.*PI*cos(2.*PI*x(0));};
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return 2.*PI*cos(2.*PI*x(0));};
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return 2.*PI*cos(2*PI*x(1))*sin(2*PI*x(0));};
     solver.project_rhs(cf_rhs);
 
-    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0));};
-//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return std::pow(x(0),2) + std::pow(x(1),2);};
+    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0))+sin(2.*PI*x(1));};
+//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0));};
+//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2*PI*x(0))*sin(2*PI*x(1));};
+//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return 1.;};
     solver.project_sol(cf_sol);
 
     char output_operators[100];
