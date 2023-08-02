@@ -423,6 +423,32 @@ public:
         }
     }
 
+    void print_1d_gradient_to_file(const std::string& filename, int dim)
+    {
+        std::ofstream file(filename);
+        // print a header
+        file << "i," << "j," << "G" << std::endl;
+        for (int i = 0; i < grid.get_total_elements(); ++i)
+        {
+            for (auto j : L[dim].row[i])
+            {
+                for (int k = 0; k < ipow(P,N); ++k) {
+                    for (int l = 0; l < ipow(P,N); ++l) {
+                        file << i * ipow(P, N) + k << "," << j * ipow(P, N) + l << "," << G[dim](i, j)(k, l) << std::endl;
+                    }
+                }
+            }
+        }
+        file.close();
+    }
+
+    void print_3d_gradient_to_file(const std::string& filename0, const std::string& filename1, const std::string& filename2)
+    {
+        print_1d_gradient_to_file(filename0, 0);
+        print_1d_gradient_to_file(filename1, 1);
+        print_1d_gradient_to_file(filename2, 2);
+    }
+
     void print_vectors_to_file(const std::string& filename)
     {
         std::ofstream file(filename);
