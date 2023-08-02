@@ -89,7 +89,6 @@ class PoissonSolver
 
     algoim::uvector<smatrix<double, ipow(P,N)>,N> D;
 
-//    std::unordered_map<int_pair,smatrix<double, ipow(P,N)>> L[N], T[N];
     BlockSparseMatrix<smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
     std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs, sol;
@@ -131,11 +130,6 @@ public:
                 grid.periodic_domain(dim, true);
             }
         }
-    }
-
-    void print_dx()
-    {
-        std::cout << grid.get_dx() << std::endl;
     }
 
     void l2_projection(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &projected_func,
@@ -228,38 +222,6 @@ public:
                 }
             }
         }
-    }
-
-    void print_Dmat()
-    {
-        for (int dim = 0; dim < N; ++dim) {
-            std::cout << "\nD_" << dim << ":" << std::endl;
-            D(dim).print();
-        }
-    }
-
-    void mult_D(std::function<double(algoim::uvector<double, N> x)> func,
-                std::function<double(algoim::uvector<double, N> x)> soln_dx,
-                std::function<double(algoim::uvector<double, N> x)> soln_dy,
-                std::function<double(algoim::uvector<double, N> x)> soln_dz)
-    {
-        algoim::uvector<double, ipow(P,N)> func_c;
-        l2_projection_on_reference_element<P,N>(func, func_c);
-
-        algoim::uvector<double, ipow(P,N)> soln_cx, soln_cy, soln_cz;
-        l2_projection_on_reference_element<P,N>(soln_dx, soln_cx);
-        l2_projection_on_reference_element<P,N>(soln_dy, soln_cy);
-        l2_projection_on_reference_element<P,N>(soln_dz, soln_cz);
-
-        algoim::uvector<double, ipow(P,N)> func_dx, func_dy, func_dz;
-
-        func_dx = matvec(D(0), func_c);
-        func_dy = matvec(D(1), func_c);
-        func_dz = matvec(D(2), func_c);
-
-        std::cout << "Difference dx: " << algoim::sqrnorm(func_dx - soln_cx) << std::endl;
-        std::cout << "Difference dy: " << algoim::sqrnorm(func_dy - soln_cy) << std::endl;
-        std::cout << "Difference dz: " << algoim::sqrnorm(func_dz - soln_cz) << std::endl;
     }
 
     void print_grid(const std::string& filename)
@@ -482,25 +444,6 @@ public:
 
         file.close();
     }
-
-
-    void inspect_lifting_operator()
-    {
-        for (int dim = 0; dim < N; ++dim) {
-            std::cout << "\nDim: " << dim << std::endl;
-
-            for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
-            {
-                for (algoim::MultiLoop<N> j(0,grid.get_elements_per_dim()); ~j; ++j)
-                {
-                    std::cout << i() << " " << j() << std::endl;
-                    L[dim][{grid.get_element_id(i()),grid.get_element_id(j())}].print();
-                    std::cout << std::endl;
-                }
-            }
-        }
-    }
-
 };
 
 
