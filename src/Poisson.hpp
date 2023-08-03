@@ -309,47 +309,19 @@ public:
                 L[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) +=     -c1 * A_ji / grid.get_dx(dim);
                 L[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += (1.-c2) * A_jj / grid.get_dx(dim);
 
-            }
-        }
-    }
-
-    void construct_penalty_operator()
-    {
-
-        smatrix<double, ipow(P,N)> A_ii, A_ij, A_ji, A_jj;
-
-        algoim::uvector<int, N> elements_per_dim = grid.get_elements_per_dim();
-
-        for (int dim = 0; dim < N; ++dim) {
-
-//            int starting_face = (grid.is_periodic()) ? 0 : 1;
-            int starting_face = 0;
-
-            for (algoim::MultiLoop<N> i(starting_face,elements_per_dim); ~i; ++i)
-            {
-                algoim::uvector<int, N> element_i, element_j;
-
-                element_i(dim) = (i(dim) - 1 == -1) ? elements_per_dim(dim) - 1 : i(dim) - 1;
-                element_j(dim) = i(dim);
-
-                for (int d = 0; d < N; ++d) {
-                    if (d != dim){
-                        element_i(d) = i(d);
-                        element_j(d) = i(d);
-                    }
-                }
-
-                compute_lifting_operator_on_ref_face(dim, A_ii, A_ij, A_ji, A_jj);
-
+                // construct penalty while we are here
                 T[dim](grid.get_element_id(element_i), grid.get_element_id(element_i)) += tau_i * A_ii / grid.get_dx(dim);
                 T[dim](grid.get_element_id(element_i), grid.get_element_id(element_j)) += tau_i * A_ij / grid.get_dx(dim);
                 T[dim](grid.get_element_id(element_j), grid.get_element_id(element_i)) += tau_i * A_ji / grid.get_dx(dim);
                 T[dim](grid.get_element_id(element_j), grid.get_element_id(element_j)) += tau_i * A_jj / grid.get_dx(dim);
 
             }
-
-            // add in dirichlet bc's
         }
+    }
+
+    void construct_penalty_operator()
+    {
+        // maybe we only construct the penalty for specific BCs.
     }
 
     void construct_gradient_operator()

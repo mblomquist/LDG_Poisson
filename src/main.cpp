@@ -20,7 +20,7 @@ int main() {
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements = 8;
+    algoim::uvector<int, N> elements = 2;
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
 

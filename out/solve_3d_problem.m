@@ -18,6 +18,9 @@ clear i2 j2 G2;
 
 A = G_0'*M*G_0 + G_1'*M*G_1 + G_2'*M*G_2;
 
-sol = -pinv(full(A))*(M*rhs);
+% sol = -pinv(full(A))*(M*rhs);
+r = qr(A,0);
+sol = -(r\(r'\A'))*(M*rhs);
+
 
 sqrt((sol-tsol)'*M*(sol-tsol))
