@@ -100,7 +100,7 @@ void l2_projection_on_reference_element(const std::function<double(const algoim:
     constexpr int Q = int((2.*P+1.)/2.)+1;
 
     // create a stacked variable of the basis at multiple quadrature points
-    algoim::uvector<algoim::uvector<double, ipow(P,N)>, ipow(Q,N)> fat_basis;
+    algoim::uvector<double, ipow(P,N)> basis;
 
     algoim::uvector<double, N> pos;
     double weights;
@@ -114,9 +114,9 @@ void l2_projection_on_reference_element(const std::function<double(const algoim:
             pos(dim) = quad.x(Q,i(dim));
         }
 
-        compute_basis_at_point<P,N>(fat_basis(fold<Q, N>(i())), pos);
+        compute_basis_at_point<P,N>(basis, pos);
 
-        p_fun += fat_basis(fold<Q, N>(i())) * weights * func(pos);
+        p_fun += basis * weights * func(pos);
 
     }
 
