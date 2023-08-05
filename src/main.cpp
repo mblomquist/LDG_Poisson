@@ -16,8 +16,8 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 4;
-    constexpr int N = 1;
+    constexpr int P = 3;
+    constexpr int N = 3;
 
 //    std::cout << "\n--- Create a grid --- \n" << std::endl;
 //    algoim::uvector<int, N> elements = 2;

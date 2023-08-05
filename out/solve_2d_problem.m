@@ -19,10 +19,3 @@ sol = -pinv(full(A))*(M*rhs);
 sqrt((sol-tsol)'*M*(sol-tsol))
 
 norm(sol-tsol)
-
-
-
-
-
-
-

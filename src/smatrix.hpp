@@ -109,6 +109,19 @@ public:
         return *this;
     }
 
+    smatrix<double, M, N> transpose()
+    {
+        smatrix<double, M, N> At;
+
+
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                At(j,i) = data_[i*N+j];
+            }
+        }
+        return At;
+    }
+
     void print()
     {
         for (int i = 0; i < M; ++i) {
