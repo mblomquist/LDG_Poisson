@@ -206,6 +206,46 @@ smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
     return K;
 }
 
+template<int M>
+void Gauss_Seidel_Iteration(smatrix<double, M> &A,
+                            algoim::uvector<double, M> &x,
+                            algoim::uvector<double, M> &b,
+                            double tol = 1.0e-12,
+                            int max_itrs = 100,
+                            double omega = 1.)
+{
+    algoim::uvector<double, M> res;
+
+    for (int itr = 0; itr < max_itrs; ++itr) {
+        for (int i = 0; i < M; ++i) {
+            double sum = 0.;
+
+            for (int j = 0; j < M; ++j) {
+                sum += A(i,j) * x(j);
+            }
+
+            x(i) = omega * (b(i) - sum + A(i,i) * x(i)) / A(i,i) + (1 - omega) * x(i);
+        }
+
+        res = b - matvec(A,x);
+
+        if (norm(res) < tol)
+            return;
+        else
+            std::cout << "Iteration " << itr << ", err: " << norm(res) << std::endl;
+    }
+}
+
+template<int M>
+void SOR_iteration(smatrix<double, M> &A,
+                   algoim::uvector<double, M> &x,
+                   algoim::uvector<double, M> &b,
+                   double omega,
+                   double tol = 1.0e-12,
+                   int max_itrs = 100)
+{
+    Gauss_Seidel_Iteration(A, x, b, tol, max_itrs, omega);
+}
 
 
 #endif //DG_UTILS_SMATRIX_HPP

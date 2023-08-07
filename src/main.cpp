@@ -58,7 +58,24 @@ int main() {
 //    sprintf(output_vectors, "../out/vectors.csv");
 //    solver.print_vectors_to_file(output_vectors);
 
-    test_transform<P,N>();
+//    test_transform<P,N>();
+
+    constexpr int size = 3;
+    smatrix<double, size> A;
+    uvector<double, size> x, b;
+
+    A(0,0) = 2.; A(0,1) = -1.; A(0,2) = 0.;
+    A(1,0) = -1.; A(1,1) = 2.; A(1,2) = -1.;
+    A(2,0) = 0.; A(2,1) = -1.; A(2,2) = 2.;
+
+    x = 0.;
+
+    b(0) = 0.9649; b(1) = 0.1576; b(2) = 0.9706;
+
+    Gauss_Seidel_Iteration<size>(A, x, b);
+
+    x = 0.;
+    SOR_iteration<size>(A,x,b,0.25);
 
     return 0;
 }
