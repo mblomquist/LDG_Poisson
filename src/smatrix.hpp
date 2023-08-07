@@ -207,13 +207,18 @@ smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
 }
 
 template<int M>
-void Gauss_Seidel_Iteration(smatrix<double, M> &A,
-                            algoim::uvector<double, M> &x,
-                            algoim::uvector<double, M> &b,
-                            double tol = 1.0e-12,
-                            int max_itrs = 100,
-                            double omega = 1.)
+void Gauss_Seidel(smatrix<double, M> &A,
+                  algoim::uvector<double, M> &x,
+                  algoim::uvector<double, M> &b,
+                  double tol = 1.0e-12,
+                  int max_itrs = 100,
+                  double omega = 1.)
 {
+    if (omega == 1.)
+        std::cout << "\n --- Gauss Seidel Iteration --- \n" << std::endl;
+    else
+        std::cout << "\n --- SOR Iteration --- \n" << std::endl;
+
     algoim::uvector<double, M> res;
 
     for (int itr = 0; itr < max_itrs; ++itr) {
@@ -230,21 +235,24 @@ void Gauss_Seidel_Iteration(smatrix<double, M> &A,
         res = b - matvec(A,x);
 
         if (norm(res) < tol)
+        {
+            std::cout << "\nIterations converged at iteration " << itr << " with a residual of " << norm(res) << std::endl;
             return;
+        }
         else
-            std::cout << "Iteration " << itr << ", err: " << norm(res) << std::endl;
+            std::cout << "Iteration " << itr << ", norm(res): " << norm(res) << std::endl;
     }
 }
 
 template<int M>
-void SOR_iteration(smatrix<double, M> &A,
-                   algoim::uvector<double, M> &x,
-                   algoim::uvector<double, M> &b,
-                   double omega,
-                   double tol = 1.0e-12,
-                   int max_itrs = 100)
+void SOR(smatrix<double, M> &A,
+         algoim::uvector<double, M> &x,
+         algoim::uvector<double, M> &b,
+         double omega,
+         double tol = 1.0e-12,
+         int max_itrs = 100)
 {
-    Gauss_Seidel_Iteration(A, x, b, tol, max_itrs, omega);
+    Gauss_Seidel(A, x, b, tol, max_itrs, omega);
 }
 
 

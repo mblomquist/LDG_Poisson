@@ -68,14 +68,14 @@ int main() {
     A(1,0) = -1.; A(1,1) = 2.; A(1,2) = -1.;
     A(2,0) = 0.; A(2,1) = -1.; A(2,2) = 2.;
 
-    x = 0.;
-
     b(0) = 0.9649; b(1) = 0.1576; b(2) = 0.9706;
 
-    Gauss_Seidel_Iteration<size>(A, x, b);
+    x = 0.;
+    Gauss_Seidel<size>(A, x, b);
 
     x = 0.;
-    SOR_iteration<size>(A,x,b,0.25);
+    double w = 1.1;
+    SOR<size>(A, x, b, w);
 
     return 0;
 }
