@@ -34,7 +34,8 @@ smatrix<double, ipow(P,N)> transform(algoim::uvector<algoim::uvector<double, N>,
         }
 
         for (int dim = 0; dim < N; ++dim) {
-            pos_s(dim) = (pos_d(dim) * (rect_s(1)(dim) - rect_s(0)(dim)) + rect_s(0)(dim) - rect_d(0)(dim)) / (rect_d(1)(dim) - rect_d(0)(dim));
+//            pos_s(dim) = (pos_d(dim) * (rect_s(1)(dim) - rect_s(0)(dim)) + rect_s(0)(dim) - rect_d(0)(dim)) / (rect_d(1)(dim) - rect_d(0)(dim));
+            pos_s(dim) = (pos_d(dim) * (rect_d(1)(dim) - rect_d(0)(dim)) + rect_d(0)(dim) - rect_s(0)(dim)) / (rect_s(1)(dim) - rect_s(0)(dim));
         }
 
         compute_basis_at_point<P,N>(basis_s, pos_s);
@@ -55,15 +56,15 @@ void test_transform()
     algoim::uvector<algoim::uvector<double, N>, 2> source, dest;
     smatrix<double, ipow(P,N)> C_sd;
 
-    source(0) = -1.;
-    source(1) = 1.;
+    source(0) = 10.0;
+    source(1) = 11.0;
 
-    dest(0) = 1.0;
-    dest(1) = 3.0;
+    dest(0) = 10.5;
+    dest(1) = 12.0;
 
     C_sd = transform<P,N>(source, dest);
 
-    constexpr int num_pts = 10;
+    constexpr int num_pts = 5;
 
     algoim::uvector<algoim::uvector<double, N>, num_pts> rnd_pts, x_s, x_d;
 
@@ -75,12 +76,12 @@ void test_transform()
 
     for (int i = 0; i < num_pts; ++i) {
         for (int dim = 0; dim < N; ++dim) {
-            x_s(i)(dim) = rnd_pts(i)(dim) * (source(1)(dim) - source(0)(dim)) + source(0)(dim);
-            x_d(i)(dim) = rnd_pts(i)(dim) * (dest(1)(dim)   - dest(0)(dim))   + dest(0)(dim);
+            x_s(i)(dim) = (rnd_pts(i)(dim) - source(0)(dim))/ (source(1)(dim) - source(0)(dim));
+            x_d(i)(dim) = (rnd_pts(i)(dim) - dest(0)(dim)) / (dest(1)(dim)   - dest(0)(dim));
         }
     }
 
-    algoim::uvector<double, ipow(P,N)> u, Cu;
+    algoim::uvector<double, ipow(P,N)> u, Cu, Ctu;
     algoim::uvector<double, num_pts> result0, result1;
 
     for (int i = 0; i < ipow(P,N); ++i) {
