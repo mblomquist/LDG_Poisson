@@ -19,10 +19,10 @@ int main() {
     constexpr int P = 2;
     constexpr int N = 2;
 
-//    std::cout << "\n--- Create a grid --- \n" << std::endl;
-//    algoim::uvector<int, N> elements = 2;
-//    algoim::uvector<double, N> domain_min = 0.;
-//    algoim::uvector<double, N> domain_max = 1.;
+    std::cout << "\n--- Create a grid --- \n" << std::endl;
+    algoim::uvector<int, N> elements = 4;
+    algoim::uvector<double, N> domain_min = 0.;
+    algoim::uvector<double, N> domain_max = 1.;
 //
 //    PoissonSolver<P,N> solver;
 //
@@ -60,22 +60,36 @@ int main() {
 
 //    test_transform<P,N>();
 
-    constexpr int size = 3;
-    smatrix<double, size> A;
-    uvector<double, size> x, b;
+//    constexpr int size = 3;
+//    smatrix<double, size> A;
+//    uvector<double, size> x, b;
+//
+//    A(0,0) = 2.; A(0,1) = -1.; A(0,2) = 0.;
+//    A(1,0) = -1.; A(1,1) = 2.; A(1,2) = -1.;
+//    A(2,0) = 0.; A(2,1) = -1.; A(2,2) = 2.;
+//
+//    b(0) = 0.9649; b(1) = 0.1576; b(2) = 0.9706;
+//
+//    x = 0.;
+//    Gauss_Seidel<size>(A, x, b);
+//
+//    x = 0.;
+//    double w = 1.1;
+//    SOR<size>(A, x, b, w);
 
-    A(0,0) = 2.; A(0,1) = -1.; A(0,2) = 0.;
-    A(1,0) = -1.; A(1,1) = 2.; A(1,2) = -1.;
-    A(2,0) = 0.; A(2,1) = -1.; A(2,2) = 2.;
+    uniformGrid<N> fineGrid(elements, domain_min, domain_max);
+    BlockSparseMatrix<smatrix<double, ipow(P,N)>> I_cf;
+    build_interpolation_operator<P,N>(fineGrid, I_cf);
 
-    b(0) = 0.9649; b(1) = 0.1576; b(2) = 0.9706;
-
-    x = 0.;
-    Gauss_Seidel<size>(A, x, b);
-
-    x = 0.;
-    double w = 1.1;
-    SOR<size>(A, x, b, w);
+    for (int i = 0; i < fineGrid.get_total_elements(); ++i)
+    {
+        for (auto j : I_cf.row[i])
+        {
+            std::cout << "(" << i << ", " << j << ")" << std::endl;
+            I_cf(i,j).print();
+            std::cout << std::endl;
+        }
+    }
 
     return 0;
 }

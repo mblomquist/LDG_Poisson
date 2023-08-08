@@ -104,11 +104,20 @@ public:
         update_dx();
     }
 
+    algoim::uvector<double, N> get_domain_min()
+    {
+        return domain_min;
+    }
 
     void set_domain_min(algoim::uvector<double, N> domain_min_)
     {
         domain_min = domain_min_;
         update_dx();
+    }
+
+    algoim::uvector<double, N> get_domain_max()
+    {
+        return domain_max;
     }
 
     void set_domain_max(algoim::uvector<double, N> domain_max_)
@@ -157,6 +166,17 @@ public:
         }
 
         return node_id;
+    }
+
+    int get_element_id_from_element_mins(algoim::uvector<double, N> mins)
+    {
+        algoim::uvector<int, N> k;
+
+        for (int dim = 0; dim < N; ++dim) {
+            k(dim) = floor(mins(dim) / dx(dim));
+        }
+
+        return zOrderMap(k);
     }
 
     int get_total_elements()
@@ -298,6 +318,17 @@ public:
         algoim::uvector<int, N> indx = get_indx_from_pos(pos);
 
         return get_element_id(indx);
+    }
+
+    algoim::uvector<double, N> get_element_min(algoim::uvector<int, N> element)
+    {
+        algoim::uvector<double, N> element_min = 0.;
+
+        for (int i = 0; i < N; ++i) {
+            element_min(i) = (element(i)) * dx(i);
+        }
+
+        return element_min;
     }
 
     algoim::uvector<double, N> get_element_max(algoim::uvector<int, N> element)
