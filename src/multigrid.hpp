@@ -14,6 +14,7 @@
 #include "math_tools.hpp"
 #include "grid.hpp"
 #include "Poisson.hpp"
+#include "BlockSparseMatrix.hpp"
 
 template <int P, int N>
 smatrix<double, ipow(P,N)> transform(algoim::uvector<algoim::uvector<double, N>, 2> rect_s,
@@ -111,7 +112,8 @@ void test_transform()
 }
 
 template<int P, int N>
-void build_interpolation_operator(uniformGrid<N> &grid, BlockSparseMatrix<smatrix<double, ipow(P,N)>> &I_cf)
+void build_interpolation_operator(uniformGrid<N> &grid,
+                                  BlockSparseMatrix<smatrix<double, ipow(P,N)>> &I_cf)
 {
     // create a coarse grid with a scaling factor of 2
     algoim::uvector<int, N> coarse_grid_elements = 0;
@@ -144,6 +146,12 @@ void build_interpolation_operator(uniformGrid<N> &grid, BlockSparseMatrix<smatri
 
         I_cf(dest_id, source_id) = transform<P,N>(source_rect, dest_rect);
     }
+}
+
+template<int P, int N>
+void multigrid_v_cycle(uniformGrid<N> &grid)
+{
+
 }
 
 #endif //LDG_POISSON_MULTIGRID_HPP

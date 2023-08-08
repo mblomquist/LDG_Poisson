@@ -1,5 +1,6 @@
 #include <iostream>
 #include <functional>
+#include <lapacke.h>
 
 #include "uvector.hpp"
 #include "grid.hpp"
@@ -20,7 +21,7 @@ int main() {
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    algoim::uvector<int, N> elements = 4;
+    algoim::uvector<int, N> elements = 2;
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
 //
@@ -45,13 +46,13 @@ int main() {
 //    solver.print_operators_to_file(output_operators);
 //
 //    // print gradient operator in 3d
-////    char output_G0[100];
-////    char output_G1[100];
-////    char output_G2[100];
-////    sprintf(output_G0, "../out/G0.csv");
-////    sprintf(output_G1, "../out/G1.csv");
-////    sprintf(output_G2, "../out/G2.csv");
-////    solver.print_3d_gradient_to_file(output_G0, output_G1, output_G2);
+//    char output_G0[100];
+//    char output_G1[100];
+//    char output_G2[100];
+//    sprintf(output_G0, "../out/G0.csv");
+//    sprintf(output_G1, "../out/G1.csv");
+//    sprintf(output_G2, "../out/G2.csv");
+//    solver.print_3d_gradient_to_file(output_G0, output_G1, output_G2);
 //
 //    std::cout << "\n--- Printing Vectors ---" << std::endl;
 //    char output_vectors[100];
@@ -78,6 +79,7 @@ int main() {
 //    SOR<size>(A, x, b, w);
 
     uniformGrid<N> fineGrid(elements, domain_min, domain_max);
+
     BlockSparseMatrix<smatrix<double, ipow(P,N)>> I_cf;
     build_interpolation_operator<P,N>(fineGrid, I_cf);
 
@@ -90,6 +92,18 @@ int main() {
             std::cout << std::endl;
         }
     }
+
+    char JOBZ = 'V';
+    char UPLO = 'U';
+    int nrows = 5;
+    double A[5*5];
+    int LDA = 1;
+    double W[5];
+    double work[5];
+    int LWORK = -1;
+    int INFO;
+
+    LAPACKE_dsyevr(JOBZ, UPLO, nrows, A, LDA, W, work, LWORK, INFO);
 
     return 0;
 }
