@@ -102,7 +102,7 @@ public:
     {
         levels = fineGrid.get_elements_per_dim()(0) / 2 + 1;
 
-        for (int lev = 0; lev < levels; ++lev) {
+        for (int lev = 0; lev < levels-1; ++lev) {
             uniformGrid<N> grid_lev(fineGrid.get_elements_per_dim() / ipow(2, lev), fineGrid.get_xmin(), fineGrid.get_xmax());
 
             Mops[lev] = prod(grid_lev.get_dx());
