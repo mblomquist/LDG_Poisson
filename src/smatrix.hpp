@@ -5,7 +5,7 @@
 #ifndef DG_UTILS_SMATRIX_HPP
 #define DG_UTILS_SMATRIX_HPP
 
-
+#include "../../eigen/Eigen/Dense"
 
 #include "uvector.hpp"
 
@@ -210,8 +210,8 @@ template<int M>
 void Gauss_Seidel(smatrix<double, M> &A,
                   algoim::uvector<double, M> &x,
                   algoim::uvector<double, M> &b,
+                  int max_itrs = 20,
                   double tol = 1.0e-12,
-                  int max_itrs = 100,
                   double omega = 1.)
 {
     if (omega == 1.)
@@ -249,10 +249,58 @@ void SOR(smatrix<double, M> &A,
          algoim::uvector<double, M> &x,
          algoim::uvector<double, M> &b,
          double omega,
-         double tol = 1.0e-12,
-         int max_itrs = 100)
+         int max_itrs = 20,
+         double tol = 1.0e-12)
 {
     Gauss_Seidel(A, x, b, tol, max_itrs, omega);
+}
+
+
+template<int M>
+smatrix<double, M> pseudo_inverse_SVD_with_Eigen(const smatrix<double, M> &A_in)
+{
+
+    smatrix<double, M> u, ut, B;
+    algoim::uvector<double, M> sigma;
+
+    // create a copy of A_in for eigen
+    Eigen::MatrixXd A(M,M);
+
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < M; ++j) {
+            A(i,j) = A_in(i,j);
+        }
+    }
+
+    // use eigen to compute the svd of A
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+    Eigen::MatrixXd U = svd.matrixU();
+    Eigen::VectorXd S = svd.singularValues();
+    Eigen::MatrixXd V = svd.matrixV();
+
+    // copy eigen svd values to smatrix
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < M; ++j) {
+            u(i,j) = U(i,j);
+            ut(i,j) = U(j,i);
+        }
+        sigma(i) = S(i);
+    }
+
+    // compute the pseudoinverse of A_in
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < M; ++j) {
+            if (abs(sigma(i)) > max(sigma)*1.e-13)
+                ut(i,j) /= sigma(i);
+            else
+                ut(i,j) *= 0.;
+        }
+    }
+
+    B = matmat(u, ut);
+
+    return B;
 }
 
 

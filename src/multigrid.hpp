@@ -16,6 +16,15 @@
 #include "Poisson.hpp"
 #include "BlockSparseMatrix.hpp"
 
+template<int P, int N>
+class MultiGrid
+{
+
+
+public:
+
+};
+
 template <int P, int N>
 smatrix<double, ipow(P,N)> transform(algoim::uvector<algoim::uvector<double, N>, 2> rect_s,
                                                    algoim::uvector<algoim::uvector<double, N>, 2> rect_d)

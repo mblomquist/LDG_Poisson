@@ -1,7 +1,7 @@
 #include <iostream>
 #include <functional>
-#include <lapacke.h>
 
+#include "../../eigen/Eigen/Dense"
 #include "uvector.hpp"
 #include "grid.hpp"
 #include "Poisson.hpp"
@@ -93,17 +93,13 @@ int main() {
         }
     }
 
-    char JOBZ = 'V';
-    char UPLO = 'U';
-    int nrows = 5;
-    double A[5*5];
-    int LDA = 1;
-    double W[5];
-    double work[5];
-    int LWORK = -1;
-    int INFO;
+    smatrix<double, 3> A, Ap;
+    A(0,0) = 1.; A(0, 1) = 2.; A(0, 2) = 3.;
+    A(1,0) = 2.; A(1, 1) = 4.; A(1, 2) = 6.;
+    A(2,0) = 3.; A(2, 1) = 6.; A(2, 2) = 9.;
 
-    LAPACKE_dsyevr(JOBZ, UPLO, nrows, A, LDA, W, work, LWORK, INFO);
+    Ap = pseudo_inverse_SVD_with_Eigen<3>(A);
+    Ap.print();
 
     return 0;
 }
