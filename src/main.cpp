@@ -72,7 +72,7 @@ int main() {
 //    b(0) = 0.9649; b(1) = 0.1576; b(2) = 0.9706;
 //
 //    x = 0.;
-//    Gauss_Seidel<size>(A, x, b);
+//    point_Gauss_Seidel<size>(A, x, b);
 //
 //    x = 0.;
 //    double w = 1.1;
@@ -80,26 +80,29 @@ int main() {
 
     uniformGrid<N> fineGrid(elements, domain_min, domain_max);
 
-    BlockSparseMatrix<smatrix<double, ipow(P,N)>> I_cf;
-    build_interpolation_operator<P,N>(fineGrid, I_cf);
+    BlockSparseMatrix<smatrix<double, ipow(P,N)>> T[N];
 
-    for (int i = 0; i < fineGrid.get_total_elements(); ++i)
-    {
-        for (auto j : I_cf.row[i])
-        {
-            std::cout << "(" << i << ", " << j << ")" << std::endl;
-            I_cf(i,j).print();
-            std::cout << std::endl;
-        }
-    }
+    MultiGrid<P,N> solver(fineGrid, T);
 
-    smatrix<double, 3> A, Ap;
-    A(0,0) = 1.; A(0, 1) = 2.; A(0, 2) = 3.;
-    A(1,0) = 2.; A(1, 1) = 4.; A(1, 2) = 6.;
-    A(2,0) = 3.; A(2, 1) = 6.; A(2, 2) = 9.;
-
-    Ap = pseudo_inverse_SVD_with_Eigen<3>(A);
-    Ap.print();
+//    build_interpolation_operator<P,N>(fineGrid, I_cf);
+//
+//    for (int i = 0; i < fineGrid.get_total_elements(); ++i)
+//    {
+//        for (auto j : I_cf.row[i])
+//        {
+//            std::cout << "(" << i << ", " << j << ")" << std::endl;
+//            I_cf(i,j).print();
+//            std::cout << std::endl;
+//        }
+//    }
+//
+//    smatrix<double, 3> A, Ap;
+//    A(0,0) = 1.; A(0, 1) = 2.; A(0, 2) = 3.;
+//    A(1,0) = 2.; A(1, 1) = 4.; A(1, 2) = 6.;
+//    A(2,0) = 3.; A(2, 1) = 6.; A(2, 2) = 9.;
+//
+//    Ap = pseudo_inverse_with_Eigen<3>(A);
+//    Ap.print();
 
     return 0;
 }

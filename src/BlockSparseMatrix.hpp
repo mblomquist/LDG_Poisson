@@ -62,12 +62,4 @@ struct BlockSparseMatrix
     }
 };
 
-template<int P, int N>
-void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P,N)>> &A,
-                        std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> x,
-                        std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> b)
-{
-
-}
-
 #endif //LDG_POISSON_BLOCKSPARSEMATRIX_HPP

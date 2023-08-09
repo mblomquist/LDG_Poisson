@@ -207,12 +207,12 @@ smatrix<double, M*O, N*O> kron_A_eyeO(const smatrix<double, M, N> &A)
 }
 
 template<int M>
-void Gauss_Seidel(smatrix<double, M> &A,
-                  algoim::uvector<double, M> &x,
-                  algoim::uvector<double, M> &b,
-                  int max_itrs = 20,
-                  double tol = 1.0e-12,
-                  double omega = 1.)
+void point_Gauss_Seidel(smatrix<double, M> &A,
+                        algoim::uvector<double, M> &x,
+                        algoim::uvector<double, M> &b,
+                        int max_itrs = 20,
+                        double tol = 1.0e-12,
+                        double omega = 1.)
 {
     if (omega == 1.)
         std::cout << "\n --- Gauss Seidel Iteration --- \n" << std::endl;
@@ -252,12 +252,12 @@ void SOR(smatrix<double, M> &A,
          int max_itrs = 20,
          double tol = 1.0e-12)
 {
-    Gauss_Seidel(A, x, b, tol, max_itrs, omega);
+    point_Gauss_Seidel(A, x, b, tol, max_itrs, omega);
 }
 
 
 template<int M>
-smatrix<double, M> pseudo_inverse_SVD_with_Eigen(const smatrix<double, M> &A_in)
+smatrix<double, M> pseudo_inverse_with_Eigen(const smatrix<double, M> &A_in)
 {
 
     smatrix<double, M> u, ut, B;

@@ -160,6 +160,61 @@ void compute_lifting_operator_on_a_face(int dim)
 
 }
 
+template<int P, int N>
+void test_transform()
+{
+    algoim::uvector<algoim::uvector<double, N>, 2> source, dest;
+    smatrix<double, ipow(P,N)> C_sd;
+
+    source(0) = 10.0;
+    source(1) = 11.0;
+
+    dest(0) = 10.5;
+    dest(1) = 12.0;
+
+    C_sd = transform<P,N>(source, dest);
+
+    constexpr int num_pts = 5;
+
+    algoim::uvector<algoim::uvector<double, N>, num_pts> rnd_pts, x_s, x_d;
+
+    for (int i = 0; i < num_pts; ++i) {
+        for (int dim = 0; dim < N; ++dim) {
+            rnd_pts(i)(dim) = static_cast<double>(std::rand()) / RAND_MAX;
+        }
+    }
+
+    for (int i = 0; i < num_pts; ++i) {
+        for (int dim = 0; dim < N; ++dim) {
+            x_s(i)(dim) = (rnd_pts(i)(dim) - source(0)(dim))/ (source(1)(dim) - source(0)(dim));
+            x_d(i)(dim) = (rnd_pts(i)(dim) - dest(0)(dim)) / (dest(1)(dim)   - dest(0)(dim));
+        }
+    }
+
+    algoim::uvector<double, ipow(P,N)> u, Cu, Ctu;
+    algoim::uvector<double, num_pts> result0, result1;
+
+    for (int i = 0; i < ipow(P,N); ++i) {
+        u(i) = static_cast<double>(std::rand()) / RAND_MAX;
+    }
+
+    Cu = matvec<ipow(P,N)>(C_sd, u);
+
+    std::cout << "\n--- Random Points ---" << std::endl;
+    for (int i = 0; i < num_pts; ++i) {
+        std::cout << "pt " << i << ": " << rnd_pts(i) << ", " << x_s(i) << ", " << x_d(i) << std::endl;
+    }
+
+    std::cout << "\n--- Results ---" << std::endl;
+    std::cout << "source rectangle: " << source << std::endl;
+    std::cout << "destination rectangle: " << dest << std::endl;
+    for (int i = 0; i < num_pts; ++i) {
+        result0(i) = compute_basis_coefficients_at_point<P,N>(u,x_s(i));
+        result1(i) = compute_basis_coefficients_at_point<P,N>(Cu,x_d(i));
+
+        std::cout << "pt " << i << ": " << std::abs(result0(i) - result1(i)) << std::endl;
+    }
+}
 
 
 
