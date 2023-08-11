@@ -56,7 +56,7 @@ public:
 
         build_operators(fineGrid, G);
 
-//        print_operators();
+        print_operators();
 
     }
 
