@@ -1,9 +1,4 @@
-//
-// Created by mblomquist on 8/8/23.
-//
-
-#ifndef LDG_POISSON_BLOCKSPARSEMATRIX_HPP
-#define LDG_POISSON_BLOCKSPARSEMATRIX_HPP
+#pragma once
 
 #include <cmath>
 #include <vector>
@@ -40,6 +35,7 @@ namespace std
     };
 }
 
+// simple BlockSparseMatrix implementation for operators defined with std::unordered_map
 template<typename T>
 struct BlockSparseMatrix
 {
@@ -66,11 +62,11 @@ struct BlockSparseMatrix
 };
 
 template<int P, int N>
-void block_Gauss_Seidel(const BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
+void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
                         elem_vec<P,N> &x,
-                        const elem_vec<P,N> &b,
+                        elem_vec<P,N> &b,
                         int num_elements,
-                        int n_itr = 3)
+                        int n_itr = 5)
 {
     for (int itr = 0; itr < n_itr; ++itr)
     {
@@ -84,9 +80,10 @@ void block_Gauss_Seidel(const BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
                     sum += matvec(A(i,j),x[j]);
             }
 
-            x[i] = matvec(pseudo_inverse_with_Eigen(A(i, i)), b[i] - sum);
+            smatrix<double, ipow(P,N)> Ap = pseudo_inverse_with_Eigen(A(i, i));
+            algoim::uvector<double, ipow(P,N)> result = b[i] - sum;
+            x[i] = matvec(Ap,result);
         }
     }
 }
 
-#endif //LDG_POISSON_BLOCKSPARSEMATRIX_HPP

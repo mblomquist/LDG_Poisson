@@ -28,7 +28,7 @@ class uniformGrid
 
     algoim::uvector<bool, N> periodic_domain = false;
 
-    int zOrderMap(algoim::uvector<int,N> elm)
+    int zOrderMap(algoim::uvector<int,N> elm) const
     {
         int id = 0;
 
@@ -92,9 +92,9 @@ public:
         uniformGrid<N>(elements, min, max);
     }
 
-    uniformGrid(algoim::uvector<int, N> elements_per_dim_,
-                algoim::uvector<double, N> domain_min_,
-                algoim::uvector<double, N> domain_max_)
+    uniformGrid(const algoim::uvector<int, N> elements_per_dim_,
+                const algoim::uvector<double, N> domain_min_,
+                const algoim::uvector<double, N> domain_max_)
     {
         elements_per_dim = elements_per_dim_;
 
@@ -147,7 +147,7 @@ public:
         return periodic_domain(dim);
     }
 
-    int get_element_id(algoim::uvector<int, N> k)
+    int get_element_id(algoim::uvector<int, N> k) const
     {
         return zOrderMap(k);
     }
@@ -310,7 +310,7 @@ public:
         return get_element_id(indx);
     }
 
-    algoim::uvector<double, N> get_element_min(algoim::uvector<int, N> element)
+    algoim::uvector<double, N> get_element_min(algoim::uvector<int, N> element) const
     {
         algoim::uvector<double, N> element_min = 0.;
 

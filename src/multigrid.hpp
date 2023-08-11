@@ -1,9 +1,8 @@
-//
-// Created by mblomquist on 8/3/23.
-//
+#pragma once
 
-#ifndef LDG_POISSON_MULTIGRID_HPP
-#define LDG_POISSON_MULTIGRID_HPP
+/*
+ * This is a basic geometric multigrid routine for use with LDG Poisson equation on uniform Cartesian grids.
+ */
 
 #include <unordered_map>
 #include <vector>
@@ -24,39 +23,84 @@ class MultiGrid
     std::vector<BlockSparseMatrix<smatrix<double, ipow(P,N)>>> Aops, Iops, Gops[N];
     std::vector<double> Mops;
 
-    std::vector<elem_vec<P,N>> r_lev, x_lev, rhs_lev;
+    std::vector<elem_vec<P,N>> r_lev, x_lev, b_lev;
 
     std::vector<int> n_elements_lev;
 
     int levels = 1;
 
-
-
 public:
 
-    MultiGrid(const uniformGrid<N> &fineGrid, BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
+    MultiGrid(const uniformGrid<N> &fineGrid, const BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
     {
         levels = std::sqrt(fineGrid.get_elements_per_dim()(0)) + 1;
 
         Mops.resize(levels);
         Iops.resize(levels-1);
         Aops.resize(levels);
+        n_elements_lev.resize(levels);
 
+        x_lev.resize(levels);
+        b_lev.resize(levels);
         r_lev.resize(levels);
 
         for (int dim = 0; dim < N; ++dim) {
             Gops[dim].resize(levels);
         }
 
-        for (int lev = 0; lev < levels; ++lev) {
-            n_elements_lev[lev] = fineGrid.get_elements_per_dim()(0) / ipow(2, lev);
+        n_elements_lev[0] = prod(fineGrid.get_elements_per_dim());
+
+        for (int lev = 1; lev < levels; ++lev) {
+            n_elements_lev[lev] = n_elements_lev[lev-1] / ipow(2,N);
         }
 
         build_operators(fineGrid, G);
 
     }
 
-    void build_operators(const uniformGrid<N> &fineGrid, BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
+    elem_vec<P,N> solve(const elem_vec<P,N>& rhs)
+    {
+        b_lev[0] = rhs;
+        v_cycle(0);
+        return x_lev[0];
+    }
+
+    // standard multigrid v_cycle with Gauss-Seidel smoothing
+    void v_cycle(int lev)
+    {
+        if (lev < levels-1)
+        {
+            block_Gauss_Seidel<P,N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev]);
+            compute_residual(lev);
+            restrict_r(lev);
+            v_cycle(lev + 1);
+            interpolate_x(lev);
+            block_Gauss_Seidel<P,N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev]);
+        }
+        else
+        {
+            // bottom level direct solve
+            smatrix<double, ipow(P,N)> Ap;
+            Ap = pseudo_inverse_with_Eigen(Aops[levels-1](0,0));
+            x_lev[levels-1][0] = matvec(Ap,b_lev[levels-1][0]);
+        }
+    }
+    
+    void print_operators()
+    {
+        std::cout << "\n--- Printing Iops ---" << std::endl;
+        for (int lev = 0; lev < levels - 1; ++lev) {
+            std::cout << "Level: " << lev << std::endl;
+            for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                for (auto k : Iops[lev].row[i]) {
+                    std::cout << "(" << i << "," << k << ") " << std::endl;
+//                    Iops[lev](i,k).print();
+                }
+            }
+        }
+    }
+
+    void build_operators(const uniformGrid<N> &fineGrid, const BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
     {
         // build interpolation operator and mass matrix coefficient
         for (int lev = 0; lev < levels-1; ++lev) {
@@ -70,6 +114,7 @@ public:
 
         // build Gops
         for (int dim = 0; dim < N; ++dim) {
+            Gops[dim][0] = G[dim];
             for (int lev = 1; lev < levels; ++lev) {
 
                 // compute (G_f * I_cf)
@@ -109,11 +154,9 @@ public:
     }
 
 
-    smatrix<double, ipow(P,N)> transform(algoim::uvector<algoim::uvector<double, N>, 2> rect_s,
-                                         algoim::uvector<algoim::uvector<double, N>, 2> rect_d)
+    smatrix<double, ipow(P,N)> transform(const algoim::uvector<algoim::uvector<double, N>, 2>& rect_s,
+                                                       const algoim::uvector<algoim::uvector<double, N>, 2>& rect_d)
     {
-        GaussQuad quad;
-
         smatrix<double, ipow(P,N)> C;
 
         algoim::uvector<double, ipow(P,N)> basis_s, basis_d;
@@ -126,8 +169,8 @@ public:
             weights = 1.;
 
             for (int dim = 0; dim < N; ++dim) {
-                weights *= quad.w(P,i(dim));
-                pos_d(dim) = quad.x(P, i(dim));
+                weights *= GaussQuad::w(P,i(dim));
+                pos_d(dim) = GaussQuad::x(P, i(dim));
             }
 
             for (int dim = 0; dim < N; ++dim) {
@@ -142,7 +185,7 @@ public:
         return C;
     }
 
-    void build_interpolation_operator(uniformGrid<N> &grid,
+    void build_interpolation_operator(const uniformGrid<N> &grid,
                                       BlockSparseMatrix<smatrix<double, ipow(P,N)>> &I_cf)
     {
         // create a coarse grid with a scaling factor of 2
@@ -152,7 +195,7 @@ public:
             coarse_grid_elements(dim) = int(grid.get_elements_per_dim()(dim) / 2);
         }
 
-        uniformGrid<N> coarseGrid(coarse_grid_elements, grid.get_domain_min(), grid.get_domain_max());
+        uniformGrid<N> coarseGrid(coarse_grid_elements, grid.get_xmin(), grid.get_xmax());
 
         for (algoim::MultiLoop<N> i(0,grid.get_elements_per_dim()); ~i; ++i)
         {
@@ -178,51 +221,78 @@ public:
         }
     }
 
-    void compute_residual(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &x_lev,
-                          std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
-                          int lev)
+    void compute_residual(const int lev)
     {
         for (int i = 0; i < n_elements_lev[lev]; ++i) {
             for (auto j : Aops[lev].row[i]) {
-                r_lev[lev][i] += f_lev - matvec(Aops[lev](i,j),x_lev[j]);
+                r_lev[lev][i] += b_lev[lev][i] - matvec(Aops[lev](i,j),x_lev[lev][j]);
             }
         }
     }
 
-    void restrict_r(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
-                    int lev)
+    void restrict_r(const int lev)
     {
-
         for (int i = 0; i < n_elements_lev[lev]; ++i) {
-            for (auto j : Aops[lev].row[i]) {
-                r_lev[lev+1][j] += matvec(Iops[lev](j,i).transpose(),f_lev[i]);
+            for (auto j : Iops[lev].col[i]) {
+                b_lev[lev+1][j] += matvec(Iops[lev](j,i).transpose(),r_lev[lev][i]);
             }
         }
     }
-    
-    void vcycle(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &x_lev,
-                std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
-                int lev)
-    {
-        if (lev < levels-1)
-        {
-            block_Gauss_Seidel<P,N>(Aops[lev], x_lev, f_lev, n_elements_lev[lev]);
-            compute_residual(x_lev, f_lev);
-            restrict_r(r_lev[lev], lev);
-        }
-        else
-        {
-            // direct solve
 
-            smatrix<double, ipow(P,N)> Ap;
-            Ap = pseudo_inverse_with_Eigen(Aops[levels-1]);
-            x_lev[0] = matvec(Ap,f_lev[0]);
+    void interpolate_x(const int lev)
+    {
+
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            for (auto j : Iops[lev].row[i]) {
+                x_lev[lev][j] += matvec(Iops[lev](i,j),x_lev[lev+1][i]);
+            }
         }
     }
+
+    void print_r_lev(const int lev)
+    {
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            std::cout << r_lev[lev][i] << std::endl;
+        }
+    }
+
+    void print_x_lev(const int lev)
+    {
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            std::cout << x_lev[lev][i] << std::endl;
+        }
+    }
+
+    void print_b_lev(const int lev)
+    {
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            std::cout << b_lev[lev][i] << std::endl;
+        }
+    }
+
+    void print_Aops_lev(const int lev)
+    {
+        std::cout << "\n --- Printing Aops[" << lev << "] --- " << std::endl;
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            for (auto j : Aops[lev].row[i])
+            {
+                std::cout << i << "," << j << std::endl;
+                Aops[lev](i,j).print();
+            }
+        }
+    }
+
+    void print_Gops_lev(const int lev)
+    {
+        std::cout << "\n --- Printing Gops[" << lev << "] --- " << std::endl;
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            for (auto j : Gops[0][lev].row[i])
+            {
+                std::cout << i << "," << j << std::endl;
+                Gops[0][lev](i,j).print();
+            }
+        }
+    }
+
+
 };
-
-
-
-
-
-#endif //LDG_POISSON_MULTIGRID_HPP

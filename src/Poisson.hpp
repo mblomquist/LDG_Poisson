@@ -1,9 +1,4 @@
-//
-// Created by mblomquist on 7/19/23.
-//
-
-#ifndef LDG_POISSON_POISSON_HPP
-#define LDG_POISSON_POISSON_HPP
+#pragma once
 
 #include <cmath>
 #include <vector>
@@ -20,6 +15,7 @@
 #include "grid.hpp"
 #include "smatrix.hpp"
 #include "BlockSparseMatrix.hpp"
+#include "multigrid.hpp"
 
 template<int P, int N>
 class PoissonSolver
@@ -38,7 +34,7 @@ class PoissonSolver
 
     BlockSparseMatrix<smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
-    elem_vec<P,N> rhs, sol;
+    elem_vec<P,N> rhs, sol, t_sol;
 
 public:
 
@@ -46,6 +42,22 @@ public:
     {
         boundary_conditions = 0;
         grid.set_periodic(true);
+
+        construct_broken_gradient_operator();
+    }
+
+    void solve_with_Multigrid()
+    {
+        construct_gradient_operator();
+        MultiGrid<P,N> solver(grid, G);
+        sol = solver.solve(rhs);
+    }
+
+    void print_solution()
+    {
+        for (int i = 0; i < prod(grid.get_elements_per_dim()); ++i) {
+            std::cout << i << ", " << sol[i] << ", error: " << norm(sol[i] - t_sol[i]) << std::endl;
+        }
     }
 
     void set_domain(algoim::uvector<double, N> domain_min_,
@@ -102,9 +114,9 @@ public:
         l2_projection(rhs, func);
     }
 
-    void project_sol(const std::function<double(const algoim::uvector<double,N>&)> &func)
+    void project_tsol(const std::function<double(const algoim::uvector<double,N>&)> &func)
     {
-        l2_projection(sol, func);
+        l2_projection(t_sol, func);
     }
 
     void evaluate_basis_on_uniform_grid(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &basis_coeffs,
@@ -280,7 +292,6 @@ public:
 
     void construct_gradient_operator()
     {
-        construct_broken_gradient_operator();
         construct_lifting_operator_periodic_grid();
 
         // loop through ever dimension
@@ -397,8 +408,3 @@ public:
         file.close();
     }
 };
-
-
-
-
-#endif //LDG_POISSON_POISSON_HPP
