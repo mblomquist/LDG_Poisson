@@ -21,10 +21,93 @@ template<int P, int N>
 class MultiGrid
 {
 
-    std::vector<BlockSparseMatrix<smatrix<double, ipow(P,N)>>> Aops, Gops, Iops;
+    std::vector<BlockSparseMatrix<smatrix<double, ipow(P,N)>>> Aops, Iops, Gops[N];
     std::vector<double> Mops;
 
+    std::vector<elem_vec<P,N>> r_lev, x_lev, rhs_lev;
+
+    std::vector<int> n_elements_lev;
+
     int levels = 1;
+
+
+
+public:
+
+    MultiGrid(const uniformGrid<N> &fineGrid, BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
+    {
+        levels = std::sqrt(fineGrid.get_elements_per_dim()(0)) + 1;
+
+        Mops.resize(levels);
+        Iops.resize(levels-1);
+        Aops.resize(levels);
+
+        r_lev.resize(levels);
+
+        for (int dim = 0; dim < N; ++dim) {
+            Gops[dim].resize(levels);
+        }
+
+        for (int lev = 0; lev < levels; ++lev) {
+            n_elements_lev[lev] = fineGrid.get_elements_per_dim()(0) / ipow(2, lev);
+        }
+
+        build_operators(fineGrid, G);
+
+    }
+
+    void build_operators(const uniformGrid<N> &fineGrid, BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
+    {
+        // build interpolation operator and mass matrix coefficient
+        for (int lev = 0; lev < levels-1; ++lev) {
+            uniformGrid<N> grid_lev(fineGrid.get_elements_per_dim() / ipow(2, lev), fineGrid.get_xmin(), fineGrid.get_xmax());
+
+            Mops[lev] = prod(grid_lev.get_dx());
+            build_interpolation_operator(grid_lev, Iops[lev]);
+        }
+
+        Mops[levels-1] = prod(fineGrid.get_xmax() - fineGrid.get_xmin());
+
+        // build Gops
+        for (int dim = 0; dim < N; ++dim) {
+            for (int lev = 1; lev < levels; ++lev) {
+
+                // compute (G_f * I_cf)
+                BlockSparseMatrix<smatrix<double, ipow(P,N)>> GI;
+                for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                    for (auto k : Gops[dim][lev-1].row[i]){
+                        for (auto j : Iops[lev-1].row[i]){
+                            GI(i,j) += matmat(Gops[dim][lev-1](i,k),Iops[lev-1](k,j));
+                        }
+                    }
+                }
+
+                // compute I_cf^T * (G_f * I_cf)
+                for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                    for (auto k : Gops[dim][lev-1].row[i]){
+                        for (auto j : Iops[lev-1].row[i]){
+                            Gops[dim][lev](k,j) += matmat(Iops[lev-1](k,i).transpose(),GI(i,j));
+                        }
+                    }
+                }
+
+            }
+        }
+
+        // build Aops
+        for (int lev = 0; lev < levels; ++lev) {
+            for (int dim = 0; dim < N; ++dim) {
+                for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                    for (auto k : Gops[dim][lev].row[i]){
+                        for (auto j : Gops[dim][lev].row[i]){
+                            Aops[lev](i,j) += Mops[lev] * matmat(Gops[dim][lev](k,i).transpose(),Gops[dim][lev](k,j));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     smatrix<double, ipow(P,N)> transform(algoim::uvector<algoim::uvector<double, N>, 2> rect_s,
                                          algoim::uvector<algoim::uvector<double, N>, 2> rect_d)
@@ -48,7 +131,6 @@ class MultiGrid
             }
 
             for (int dim = 0; dim < N; ++dim) {
-//            pos_s(dim) = (pos_d(dim) * (rect_s(1)(dim) - rect_s(0)(dim)) + rect_s(0)(dim) - rect_d(0)(dim)) / (rect_d(1)(dim) - rect_d(0)(dim));
                 pos_s(dim) = (pos_d(dim) * (rect_d(1)(dim) - rect_d(0)(dim)) + rect_d(0)(dim) - rect_s(0)(dim)) / (rect_s(1)(dim) - rect_s(0)(dim));
             }
 
@@ -96,46 +178,51 @@ class MultiGrid
         }
     }
 
-public:
-
-    MultiGrid(uniformGrid<N> &fineGrid, BlockSparseMatrix<smatrix<double, ipow(P, N)>> G[N])
+    void compute_residual(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &x_lev,
+                          std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
+                          int lev)
     {
-        levels = fineGrid.get_elements_per_dim()(0) / 2 + 1;
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            for (auto j : Aops[lev].row[i]) {
+                r_lev[lev][i] += f_lev - matvec(Aops[lev](i,j),x_lev[j]);
+            }
+        }
+    }
 
-        for (int lev = 0; lev < levels-1; ++lev) {
-            uniformGrid<N> grid_lev(fineGrid.get_elements_per_dim() / ipow(2, lev), fineGrid.get_xmin(), fineGrid.get_xmax());
+    void restrict_r(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
+                    int lev)
+    {
 
-            Mops[lev] = prod(grid_lev.get_dx());
-            build_interpolation_operator(grid_lev, Iops[lev]);
+        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            for (auto j : Aops[lev].row[i]) {
+                r_lev[lev+1][j] += matvec(Iops[lev](j,i).transpose(),f_lev[i]);
+            }
+        }
+    }
+    
+    void vcycle(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &x_lev,
+                std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &f_lev,
+                int lev)
+    {
+        if (lev < levels-1)
+        {
+            block_Gauss_Seidel<P,N>(Aops[lev], x_lev, f_lev, n_elements_lev[lev]);
+            compute_residual(x_lev, f_lev);
+            restrict_r(r_lev[lev], lev);
+        }
+        else
+        {
+            // direct solve
 
+            smatrix<double, ipow(P,N)> Ap;
+            Ap = pseudo_inverse_with_Eigen(Aops[levels-1]);
+            x_lev[0] = matvec(Ap,f_lev[0]);
         }
     }
 };
 
 
-template<int P, int N>
-void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
-                        std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &x,
-                        std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &b,
-                        int num_elements,
-                        int max_itr = 3)
-{
-    for (int itr = 0; itr < max_itr; ++itr)
-    {
-        for (int i = 0; i < num_elements; ++i)
-        {
-            algoim::uvector<double, ipow(P,N)> sum = 0.;
 
-            for (auto j : A.row[i])
-            {
-                if (i != j)
-                    sum += matvec(A(i,j),x[j]);
-            }
-
-            x[i] = matvec(pseudo_inverse_with_Eigen(A(i, i)), b[i] - sum);
-        }
-    }
-}
 
 
 #endif //LDG_POISSON_MULTIGRID_HPP

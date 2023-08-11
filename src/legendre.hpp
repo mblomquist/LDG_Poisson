@@ -1,9 +1,7 @@
 //
 // Created by mblomquist on 7/7/23.
 //
-
-#ifndef DG_UTILS_LEGENDRE_HPP
-#define DG_UTILS_LEGENDRE_HPP
+#pragma once
 
 #include "uvector.hpp"
 #include "multiloop.hpp"
@@ -15,7 +13,7 @@
 #include <functional>
 
 template<int P, int N>
-int fold(const algoim::uvector<int, N> indx_t)
+int fold(const algoim::uvector<int, N> &indx_t)
 {
     int indx = 0;
 
@@ -96,8 +94,7 @@ template<int P, int N>
 void l2_projection_on_reference_element(const std::function<double(const algoim::uvector<double,N>&)> func,
                                  algoim::uvector<double, ipow(P,N)> &p_fun)
 {
-    GaussQuad quad;
-    constexpr int Q = int((2.*P+1.)/2.)+1;
+    constexpr int Q = P;
 
     // create a stacked variable of the basis at multiple quadrature points
     algoim::uvector<double, ipow(P,N)> basis;
@@ -110,8 +107,8 @@ void l2_projection_on_reference_element(const std::function<double(const algoim:
         weights = 1.;
 
         for (int dim = 0; dim < N; ++dim) {
-            weights *= quad.w(Q,i(dim));
-            pos(dim) = quad.x(Q,i(dim));
+            weights *= GaussQuad::w(Q,i(dim));
+            pos(dim) = GaussQuad::x(Q,i(dim));
         }
 
         compute_basis_at_point<P,N>(basis, pos);
@@ -160,6 +157,3 @@ double compute_basis_coefficients_at_point(algoim::uvector<double, ipow(P, N)> c
     return sum;
 }
 
-
-
-#endif //DG_UTILS_LEGENDRE_HPP

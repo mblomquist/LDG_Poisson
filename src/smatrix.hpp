@@ -109,10 +109,9 @@ public:
         return *this;
     }
 
-    smatrix<double, M, N> transpose()
+    smatrix<double, N, M> transpose()
     {
-        smatrix<double, M, N> At;
-
+        smatrix<double, N, M> At;
 
         for (int i = 0; i < M; ++i) {
             for (int j = 0; j < N; ++j) {
@@ -135,7 +134,7 @@ public:
 };
 
 template<int M, int N>
-smatrix<double, M, N> operator* (const double x, const smatrix<double, M, N> A)
+smatrix<double, M, N> operator* (const double x, const smatrix<double, M, N> &A)
 {
     smatrix<double, M, N> result;
     for (int i = 0; i < M; ++i) {

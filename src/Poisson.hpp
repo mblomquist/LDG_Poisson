@@ -21,17 +21,10 @@
 #include "smatrix.hpp"
 #include "BlockSparseMatrix.hpp"
 
-
-// create a struct for the block sparse matrix format
-
-
-
 template<int P, int N>
 class PoissonSolver
 {
     uniformGrid<N> grid;
-
-    GaussQuad quad;
 
     algoim::uvector<algoim::uvector<int, 2>, N> boundary_conditions;
 
@@ -45,7 +38,7 @@ class PoissonSolver
 
     BlockSparseMatrix<smatrix<double, ipow(P,N)>> L[N], T[N], G[N];
 
-    std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> rhs, sol;
+    elem_vec<P,N> rhs, sol;
 
 public:
 
@@ -87,7 +80,7 @@ public:
     }
 
     void l2_projection(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &projected_func,
-                       const std::function<double(const algoim::uvector<double,N>&)> func)
+                       const std::function<double(const algoim::uvector<double,N>&)> &func)
     {
         for (algoim::MultiLoop<N> i(0, grid.get_elements_per_dim()); ~i; ++i)
         {
@@ -96,7 +89,7 @@ public:
             shift = grid.get_nodal_pos(i());
             scale = grid.get_dx();
 
-            std::function<double(algoim::uvector<double, N> x)> xfunc = [shift, scale, func](algoim::uvector<double, N> x) {
+            auto xfunc = [shift, scale, func](algoim::uvector<double, N> x) {
                 return func(shift + x * scale);
             };
 
@@ -104,12 +97,12 @@ public:
         }
     }
 
-    void project_rhs(const std::function<double(const algoim::uvector<double,N>&)> func)
+    void project_rhs(const std::function<double(const algoim::uvector<double,N>&)> &func)
     {
         l2_projection(rhs, func);
     }
 
-    void project_sol(const std::function<double(const algoim::uvector<double,N>&)> func)
+    void project_sol(const std::function<double(const algoim::uvector<double,N>&)> &func)
     {
         l2_projection(sol, func);
     }
@@ -195,9 +188,12 @@ public:
                                               smatrix<double, ipow(P,N)> &A_ji,
                                               smatrix<double, ipow(P,N)> &A_jj)
     {
-        A_ii = A_ij = A_ji = A_jj = 0.;
+        A_ii = 0.;
+        A_ij = 0.;
+        A_ji = 0.;
+        A_jj = 0.;
 
-        constexpr int Q = int((2*P+1)/2)+1;
+        constexpr int Q = P;
 
         algoim::uvector<double, ipow(P,N)> eval_i, eval_j;
 
@@ -211,8 +207,8 @@ public:
             double weight = 1.;
 
             for (int j = 0; j < N - 1; ++j) {
-                pos_Dmo(j) = quad.x(Q, i(j));
-                weight *= quad.w(Q, i(j));
+                pos_Dmo(j) = GaussQuad::x(Q, i(j));
+                weight *= GaussQuad::w(Q, i(j));
             }
 
             int t = 0;
@@ -223,6 +219,10 @@ public:
                     ++t;
                 }
             }
+
+//            // look here... MATT
+//            for (int j = 0; j < N; ++j)
+//                eval_pos_i(j) = (j == dim) ? 1 : pos_Dmo( (j < dim) ? j : j - 1 );
 
             eval_i = evaluate_basis_as_point<P, N>(eval_pos_i);
             eval_j = evaluate_basis_as_point<P, N>(eval_pos_j);
@@ -287,7 +287,7 @@ public:
         for (int dim = 0; dim < N; ++dim) {
             for (int i = 0; i < grid.get_total_elements(); ++i)
             {
-                G[dim](i,i) += D(dim) / grid.get_dx(dim);
+                G[dim](i,i) += D(dim) / grid.get_dx()(dim);
 
                 for (auto j : L[dim].row[i])
                 {
@@ -297,7 +297,7 @@ public:
         }
     }
 
-    void print_operators_to_file(const std::string& filename)
+    void print_operators_to_file(const std::string& filename) const
     {
         std::ofstream file(filename);
 
@@ -349,7 +349,7 @@ public:
         }
     }
 
-    void print_1d_gradient_to_file(const std::string& filename, int dim)
+    void print_1d_gradient_to_file(const std::string& filename, int dim) const
     {
         std::ofstream file(filename);
         // print a header
@@ -368,14 +368,14 @@ public:
         file.close();
     }
 
-    void print_3d_gradient_to_file(const std::string& filename0, const std::string& filename1, const std::string& filename2)
+    void print_3d_gradient_to_file(const std::string& filename0, const std::string& filename1, const std::string& filename2) const
     {
         print_1d_gradient_to_file(filename0, 0);
         print_1d_gradient_to_file(filename1, 1);
         print_1d_gradient_to_file(filename2, 2);
     }
 
-    void print_vectors_to_file(const std::string& filename)
+    void print_vectors_to_file(const std::string& filename) const
     {
         std::ofstream file(filename);
 

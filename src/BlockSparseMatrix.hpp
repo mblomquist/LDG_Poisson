@@ -12,6 +12,9 @@
 #include <unordered_set>
 #include <iomanip>
 
+template<int P, int N>
+using elem_vec = std::unordered_map<int,algoim::uvector<double,ipow(P,N)>>;
+
 // Create struct to be used to hash a pair of integers
 struct int_pair
 {
@@ -61,5 +64,29 @@ struct BlockSparseMatrix
         return A.at[{i,j}];
     }
 };
+
+template<int P, int N>
+void block_Gauss_Seidel(const BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
+                        elem_vec<P,N> &x,
+                        const elem_vec<P,N> &b,
+                        int num_elements,
+                        int n_itr = 3)
+{
+    for (int itr = 0; itr < n_itr; ++itr)
+    {
+        for (int i = 0; i < num_elements; ++i)
+        {
+            algoim::uvector<double, ipow(P,N)> sum = 0.;
+
+            for (auto j : A.row[i])
+            {
+                if (i != j)
+                    sum += matvec(A(i,j),x[j]);
+            }
+
+            x[i] = matvec(pseudo_inverse_with_Eigen(A(i, i)), b[i] - sum);
+        }
+    }
+}
 
 #endif //LDG_POISSON_BLOCKSPARSEMATRIX_HPP

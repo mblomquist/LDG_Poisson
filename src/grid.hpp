@@ -230,17 +230,17 @@ public:
         return total;
     }
 
-    algoim::uvector<double, N> get_xmin()
+    algoim::uvector<double, N> get_xmin() const
     {
         return domain_min;
     }
 
-    algoim::uvector<double, N> get_xmax()
+    algoim::uvector<double, N> get_xmax() const
     {
         return domain_max;
     }
 
-    algoim::uvector<double, N> get_dx()
+    algoim::uvector<double, N> get_dx() const
     {
         return dx;
     }
@@ -254,18 +254,8 @@ public:
             return dx(0);
     }
 
-    double get_volume()
-    {
-        double vol = 1.;
 
-        for (int i = 0; i < N; ++i) {
-            vol *= dx(i);
-        }
-
-        return vol;
-    }
-
-    algoim::uvector<int, N> get_elements_per_dim()
+    algoim::uvector<int, N> get_elements_per_dim() const
     {
         return elements_per_dim;
     }
