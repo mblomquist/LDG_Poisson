@@ -90,16 +90,16 @@ public:
     
     void print_operators()
     {
-        std::cout << "\n--- Printing Iops ---" << std::endl;
-        for (int lev = 0; lev < levels - 1; ++lev) {
-            std::cout << "Level: " << lev << std::endl;
-            for (int i = 0; i < n_elements_lev[lev]; ++i) {
-                for (auto k : Iops[lev].row[i]) {
-                    std::cout << "(" << i << "," << k << ") " << std::endl;
+//        std::cout << "\n--- Printing Iops ---" << std::endl;
+//        for (int lev = 0; lev < levels - 1; ++lev) {
+//            std::cout << "Level: " << lev << std::endl;
+//            for (int i = 0; i < n_elements_lev[lev]; ++i) {
+//                for (auto k : Iops[lev].row[i]) {
+//                    std::cout << "(" << i << "," << k << ") " << std::endl;
 //                    Iops[lev](i,k).print();
-                }
-            }
-        }
+//                }
+//            }
+//        }
 
         std::cout << "\n--- Printing Gops ---" << std::endl;
         for (int dim = 0; dim < N; ++dim) {
@@ -110,6 +110,7 @@ public:
                     for (auto j : Gops[dim][lev].row[i]) {
                         std::cout << "(" << i << "," << j << ") " << std::endl;
                         Gops[dim][lev](i, j).print();
+                        std::cout << std::endl;
                     }
                 }
             }
@@ -122,6 +123,7 @@ public:
                     for (auto j : Aops[lev].row[i]) {
                         std::cout << "(" << i << "," << j << ") " << std::endl;
                         Aops[lev](i, j).print();
+                        std::cout << std::endl;
                     }
                 }
         }

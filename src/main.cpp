@@ -23,7 +23,7 @@ int main() {
     std::cout << "\n--- Create a grid --- \n" << std::endl;
     constexpr int levs = 4;
     algoim::uvector<int, N> elements = ipow(2,levs-1);
-    algoim::uvector<double, N> domain_min = -1.;
+    algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
 
     PoissonSolver<P,N> solver;
@@ -43,6 +43,14 @@ int main() {
     std::cout << "\n--- Solve --- \n" << std::endl;
     solver.solve_with_Multigrid();
     solver.compute_l2_error();
+
+//    char op_file[100];
+//    sprintf(op_file, "../out/op_file.csv");
+//    solver.print_operators_to_file(op_file);
+//
+//    char v_file[100];
+//    sprintf(v_file, "../out/v_file.csv");
+//    solver.print_vectors_to_file(v_file);
 
     return 0;
 }

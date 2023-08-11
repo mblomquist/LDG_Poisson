@@ -50,6 +50,10 @@ public:
     {
         construct_gradient_operator();
         MultiGrid<P,N> solver(grid, G);
+
+        for (int i = 0; i < prod(grid.get_elements_per_dim()); ++i) {
+            rhs[i] *= prod(grid.get_dx());
+        }
         sol = solver.solve(rhs);
     }
 
@@ -314,7 +318,7 @@ public:
         }
     }
 
-    void print_operators_to_file(const std::string& filename) const
+    void print_operators_to_file(const std::string& filename)
     {
         std::ofstream file(filename);
 
@@ -392,7 +396,7 @@ public:
         print_1d_gradient_to_file(filename2, 2);
     }
 
-    void print_vectors_to_file(const std::string& filename) const
+    void print_vectors_to_file(const std::string& filename)
     {
         std::ofstream file(filename);
 

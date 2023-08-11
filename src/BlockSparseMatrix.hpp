@@ -66,13 +66,13 @@ void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
                         elem_vec<P,N> &x,
                         elem_vec<P,N> &b,
                         int num_elements,
-                        int n_itr = 5)
+                        int n_itr = 2)
 {
     for (int itr = 0; itr < n_itr; ++itr)
     {
         for (int i = 0; i < num_elements; ++i)
         {
-            algoim::uvector<double, ipow(P,N)> sum = 0.;
+            algoim::uvector<double, ipow(P,N)> sum;
 
             for (auto j : A.row[i])
             {

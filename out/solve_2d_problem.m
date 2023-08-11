@@ -1,7 +1,7 @@
 close all; clear; clc;
 
-[M, rhs, tsol] = import_vectors("vectors.csv");
-[D_0, D_1, L_0, L_1, G_0, G_1, T_0, T_1] = import_operators("operators.csv");
+[M, rhs, tsol] = import_vectors("v_file.csv");
+[D_0, D_1, L_0, L_1, G_0, G_1, T_0, T_1] = import_operators("op_file.csv");
 
 M = spdiags(M,0,length(M),length(M)); 
 
@@ -17,5 +17,3 @@ sol = -pinv(full(A))*(M*rhs);
 
 
 sqrt((sol-tsol)'*M*(sol-tsol))
-
-norm(sol-tsol)
