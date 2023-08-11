@@ -21,7 +21,7 @@ int main() {
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    constexpr int levs = 2;
+    constexpr int levs = 4;
     algoim::uvector<int, N> elements = ipow(2,levs-1);
     algoim::uvector<double, N> domain_min = -1.;
     algoim::uvector<double, N> domain_max = 1.;
@@ -32,18 +32,17 @@ int main() {
     solver.set_elements_per_dim(elements);
 
     std::cout << "\n--- Project the rhs and true solution --- \n" << std::endl;
-//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -PI*PI*sin(PI*x(0));};
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
+//    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return PI*PI*sin(PI*x(0));};
     solver.project_rhs(cf_rhs);
 
-//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0))+sin(2.*PI*x(1));};
-    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(PI*x(0));};
+    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0))+sin(2.*PI*x(1));};
+//    std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return 0.;};
     solver.project_tsol(cf_sol);
 
     std::cout << "\n--- Solve --- \n" << std::endl;
     solver.solve_with_Multigrid();
-//    solver.print_solution();
-
+    solver.compute_l2_error();
 
     return 0;
 }

@@ -53,11 +53,17 @@ public:
         sol = solver.solve(rhs);
     }
 
-    void print_solution()
+    void compute_l2_error()
     {
+        double l2_error = 0;
+
         for (int i = 0; i < prod(grid.get_elements_per_dim()); ++i) {
-            std::cout << i << ", " << sol[i] << ", error: " << norm(sol[i] - t_sol[i]) << std::endl;
+            for (int j = 0; j < ipow(P, N); ++j) {
+                l2_error += prod(grid.get_dx()) * std::pow(sol[i](j) + t_sol[i](j), 2);
+            }
         }
+
+        std::cout << "L2 Error: " << l2_error << std::endl;
     }
 
     void set_domain(algoim::uvector<double, N> domain_min_,

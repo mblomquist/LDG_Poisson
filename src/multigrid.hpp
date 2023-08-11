@@ -56,6 +56,8 @@ public:
 
         build_operators(fineGrid, G);
 
+//        print_operators();
+
     }
 
     elem_vec<P,N> solve(const elem_vec<P,N>& rhs)
@@ -98,6 +100,32 @@ public:
                 }
             }
         }
+
+        std::cout << "\n--- Printing Gops ---" << std::endl;
+        for (int dim = 0; dim < N; ++dim) {
+            std::cout << "Dim: " << dim << std::endl;
+            for (int lev = 0; lev < levels; ++lev) {
+                std::cout << "Level: " << lev << std::endl;
+                for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                    for (auto j : Gops[dim][lev].row[i]) {
+                        std::cout << "(" << i << "," << j << ") " << std::endl;
+                        Gops[dim][lev](i, j).print();
+                    }
+                }
+            }
+        }
+
+        std::cout << "\n--- Printing Aops ---" << std::endl;
+            for (int lev = 0; lev < levels; ++lev) {
+                std::cout << "Level: " << lev << std::endl;
+                for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                    for (auto j : Aops[lev].row[i]) {
+                        std::cout << "(" << i << "," << j << ") " << std::endl;
+                        Aops[lev](i, j).print();
+                    }
+                }
+        }
+
     }
 
     void build_operators(const uniformGrid<N> &fineGrid, const BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G)
