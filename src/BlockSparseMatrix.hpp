@@ -87,3 +87,56 @@ void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
     }
 }
 
+template<int P, int N>
+elem_vec<P, N> BlockSparse_matvec(BlockSparseMatrix<smatrix<double, ipow(P,N)>> &A,
+                                  elem_vec<P,N> &x,
+                                  int num_rows_b,
+                                  bool A_is_transpose = false)
+{
+    elem_vec<P,N> b;
+
+    for (int i = 0; i < num_rows_b; ++i) {
+        if (!A_is_transpose) {
+            for (auto j : A.row[i]) {
+                b[i] = matvec(A(i,j), x[j]);
+            }
+        } else {
+            for (auto j : A.col[i]) {
+                b[i] = matvec(A(j,i).transpose(),x[j]);
+            }
+        }
+    }
+
+    return b;
+}
+
+/*
+ * Computes the C = A * B where A and B are BlockSparseMatrices.
+ */
+template<int P, int N>
+BlockSparseMatrix<smatrix<double, ipow(P,N)>> BlockSparse_matmat(BlockSparseMatrix<smatrix<double, ipow(P,N)>> &A,
+                                                                               BlockSparseMatrix<smatrix<double, ipow(P,N)>> &B,
+                                                                               int num_rows_C,
+                                                                               bool A_is_transpose = false)
+{
+    BlockSparseMatrix<smatrix<double, ipow(P,N)>> C;
+
+    for (int i = 0; i < num_rows_C; ++i) {
+        if (!A_is_transpose)
+        {
+            for (auto k : A.row[i]) {
+                for (auto j : B.row[i]) {
+                    C(i,j) += matmat(A(i,k), B(k, j));
+                }
+            }
+        } else {
+            for (auto k : A.col[i]) {
+                for (auto j : B.row[k]) {
+                    C(i,j) += matmat(A(k,i).transpose(),B(k,j));
+                }
+            }
+        }
+    }
+
+    return C;
+}

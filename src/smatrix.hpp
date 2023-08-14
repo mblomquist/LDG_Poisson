@@ -1,11 +1,8 @@
-//
-// Created by mblomquist on 7/7/23.
-//
-
-#ifndef DG_UTILS_SMATRIX_HPP
-#define DG_UTILS_SMATRIX_HPP
+#pragma once
 
 #include "../../eigen/Eigen/Dense"
+
+#include <iomanip>
 
 #include "uvector.hpp"
 
@@ -125,7 +122,7 @@ public:
     {
         for (int i = 0; i < M; ++i) {
             for (int j = 0; j < N; ++j) {
-                std::cout << ((std::abs(data_[i*N+j]) > 1.e-12) ? data_[i*N+j] : 0.) << ((j == N-1) ? ";" : ", ");
+                std::cout << ((std::abs(data_[i*N+j]) > 1.e-12) ? data_[i*N+j] : 0.0) << ((j == N-1) ? ";" : ", ");
             }
             std::cout << std::endl;
         }
@@ -301,6 +298,3 @@ smatrix<double, M> pseudo_inverse_with_Eigen(const smatrix<double, M> &A_in)
 
     return B;
 }
-
-
-#endif //DG_UTILS_SMATRIX_HPP
