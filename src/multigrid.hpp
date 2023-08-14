@@ -129,6 +129,7 @@ public:
                                     fineGrid.get_xmax());
 
             Mops[lev] = prod(grid_lev.get_dx());
+//            std::cout << "Building Interpolation Operator on: " << lev << std::endl;
             build_interpolation_operator(grid_lev, Iops[lev]);
         }
 
@@ -144,7 +145,7 @@ public:
                 GI = BlockSparse_matmat<P, N>(Gops[dim][lev - 1], Iops[lev - 1], n_elements_lev[lev - 1]);
 
                 // compute I_cf^T * (G_f * I_cf)
-                Gops[dim][lev] = BlockSparse_matmat<P, N>(Iops[lev - 1], GI, n_elements_lev[lev], true);
+                Gops[dim][lev] = BlockSparse_matmat<P, N>(Iops[lev - 1], GI, n_elements_lev[lev], true, Mops[lev-1] / Mops[lev]);
             }
         }
 
@@ -225,6 +226,8 @@ public:
             dest_rect(1) = dest_rect(0) + grid.get_dx();
 
             I_cf(dest_id, source_id) = transform(source_rect, dest_rect);
+
+//            std::cout << "(" << source_id << ", " << dest_id << ")" << std::endl;
         }
     }
 

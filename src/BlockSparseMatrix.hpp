@@ -117,7 +117,8 @@ template<int P, int N>
 BlockSparseMatrix<smatrix<double, ipow(P,N)>> BlockSparse_matmat(BlockSparseMatrix<smatrix<double, ipow(P,N)>> &A,
                                                                                BlockSparseMatrix<smatrix<double, ipow(P,N)>> &B,
                                                                                int num_rows_C,
-                                                                               bool A_is_transpose = false)
+                                                                               bool A_is_transpose = false,
+                                                                               double alpha = 1.)
 {
     BlockSparseMatrix<smatrix<double, ipow(P,N)>> C;
 
@@ -126,13 +127,13 @@ BlockSparseMatrix<smatrix<double, ipow(P,N)>> BlockSparse_matmat(BlockSparseMatr
         {
             for (auto k : A.row[i]) {
                 for (auto j : B.row[i]) {
-                    C(i,j) += matmat(A(i,k), B(k, j));
+                    C(i,j) += alpha * matmat(A(i,k), B(k, j));
                 }
             }
         } else {
             for (auto k : A.col[i]) {
                 for (auto j : B.row[k]) {
-                    C(i,j) += matmat(A(k,i).transpose(),B(k,j));
+                    C(i,j) += alpha * matmat(A(k,i).transpose(),B(k,j));
                 }
             }
         }

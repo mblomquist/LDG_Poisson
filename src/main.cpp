@@ -21,7 +21,7 @@ int main() {
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    constexpr int levs = 2;
+    constexpr int levs = 3;
     algoim::uvector<int, N> elements = ipow(2,levs-1);
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
