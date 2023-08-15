@@ -82,16 +82,16 @@ public:
     }
 
     void print_operators() {
-        std::cout << "\n--- Printing Iops ---" << std::endl;
-        for (int lev = 0; lev < levels - 1; ++lev) {
-            std::cout << "\n\n ---------------- Level: " << lev << " ----------------" << std::endl;
-            for (int i = 0; i < n_elements_lev[lev]; ++i) {
-                for (auto k : Iops[lev].row[i]) {
-                    std::cout << "(" << i << "," << k << ") " << std::endl;
-                    Iops[lev](i,k).print();
-                }
-            }
-        }
+//        std::cout << "\n--- Printing Iops ---" << std::endl;
+//        for (int lev = 0; lev < levels - 1; ++lev) {
+//            std::cout << "\n\n ---------------- Level: " << lev << " ----------------" << std::endl;
+//            for (int i = 0; i < n_elements_lev[lev]; ++i) {
+//                for (auto k : Iops[lev].row[i]) {
+//                    std::cout << "(" << i << "," << k << ") " << std::endl;
+//                    Iops[lev](i,k).print();
+//                }
+//            }
+//        }
 
         std::cout << "\n--- Printing Gops ---" << std::endl;
         for (int dim = 0; dim < N; ++dim) {
