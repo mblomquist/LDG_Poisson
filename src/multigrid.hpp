@@ -28,10 +28,19 @@ class MultiGrid {
 
     int levels = 1;
 
+    int mu = 3;
+
 public:
 
     MultiGrid(const uniformGrid<N> &fineGrid, const BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G) {
-        levels = std::sqrt(fineGrid.get_elements_per_dim()(0)) + 1;
+//        levels = std::sqrt(fineGrid.get_elements_per_dim()(0)) + 1;
+
+        int elm_dim = fineGrid.get_elements_per_dim()(0);
+        while (elm_dim > 1)
+        {
+            elm_dim /= 2;
+            ++levels;
+        }
 
         Mops.resize(levels);
         Iops.resize(levels - 1);
@@ -54,8 +63,13 @@ public:
 
         build_operators(fineGrid, G);
 
-//        print_operators();
+        print_operators();
 
+    }
+
+    int print_levels()
+    {
+        return levels;
     }
 
     elem_vec<P, N> solve(const elem_vec<P, N> &rhs) {
@@ -67,12 +81,12 @@ public:
     // standard multigrid v_cycle with Gauss-Seidel smoothing
     void v_cycle(int lev) {
         if (lev < levels - 1) {
-            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev]);
+            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
             compute_residual(lev);
             restrict_r(lev);
             v_cycle(lev + 1);
             interpolate_x(lev);
-            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev]);
+            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
         } else {
             // bottom level direct solve
             smatrix<double, ipow(P, N)> Ap;
@@ -100,25 +114,29 @@ public:
                 std::cout << "\n\n ---------------- Level: " << lev << " ----------------" << std::endl;
                 for (int i = 0; i < n_elements_lev[lev]; ++i) {
                     for (auto j: Gops[dim][lev].row[i]) {
-                        std::cout << "(" << i << "," << j << ") " << std::endl;
-                        Gops[dim][lev](i, j).print();
-                        std::cout << std::endl;
+                        if (lev == levels-1){
+                            std::cout << "(" << i << "," << j << ") " << std::endl;
+                            Gops[dim][lev](i, j).print();
+                            std::cout << std::endl;
+                        }
                     }
                 }
             }
         }
 
-//        std::cout << "\n--- Printing Aops ---" << std::endl;
-//        for (int lev = 0; lev < levels; ++lev) {
-//            std::cout << "Level: " << lev << std::endl;
-//            for (int i = 0; i < n_elements_lev[lev]; ++i) {
-//                for (auto j: Aops[lev].row[i]) {
-//                    std::cout << "(" << i << "," << j << ") " << std::endl;
-//                    Aops[lev](i, j).print();
-//                    std::cout << std::endl;
-//                }
-//            }
-//        }
+        std::cout << "\n--- Printing Aops ---" << std::endl;
+        for (int lev = 0; lev < levels; ++lev) {
+            std::cout << "Level: " << lev << std::endl;
+            for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                for (auto j: Aops[lev].row[i]) {
+                    if (lev == levels-1){
+                        std::cout << "(" << i << "," << j << ") " << std::endl;
+                        Aops[lev](i, j).print();
+                        std::cout << std::endl;
+                    }
+                }
+            }
+        }
 
     }
 
@@ -227,7 +245,6 @@ public:
 
             I_cf(dest_id, source_id) = transform(source_rect, dest_rect);
 
-//            std::cout << "(" << source_id << ", " << dest_id << ")" << std::endl;
         }
     }
 
@@ -235,7 +252,7 @@ public:
 
         for (int i = 0; i < n_elements_lev[lev]; ++i) {
             for (auto j : Aops[lev].row[i]) {
-                r_lev[lev][i] += b_lev[lev][i] - matvec(Aops[lev](i, j), x_lev[lev][j]);
+                r_lev[lev][i] = b_lev[lev][i] - matvec(Aops[lev](i, j), x_lev[lev][j]);
             }
         }
     }
@@ -244,7 +261,7 @@ public:
 
         for (int i = 0; i < n_elements_lev[lev+1]; ++i) {
             for (auto j: Iops[lev].col[i]) {
-                b_lev[lev + 1][j] += matvec(Iops[lev](j, i).transpose(), r_lev[lev][i]);
+                b_lev[lev + 1][i] = matvec(Iops[lev](j, i).transpose(), r_lev[lev][j]);
             }
         }
     }
@@ -253,7 +270,7 @@ public:
 
         for (int i = 0; i < n_elements_lev[lev]; ++i) {
             for (auto j: Iops[lev].row[i]) {
-                x_lev[lev][j] += matvec(Iops[lev](i, j), x_lev[lev + 1][i]);
+                x_lev[lev][i] += matvec(Iops[lev](i, j), x_lev[lev + 1][j]);
             }
         }
     }
