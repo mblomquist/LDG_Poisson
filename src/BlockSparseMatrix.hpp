@@ -126,7 +126,7 @@ BlockSparseMatrix<smatrix<double, ipow(P,N)>> BlockSparse_matmat(BlockSparseMatr
         if (!A_is_transpose)
         {
             for (auto k : A.row[i]) {
-                for (auto j : B.row[i]) {
+                for (auto j : B.row[k]) {
                     C(i,j) += alpha * matmat(A(i,k), B(k, j));
                 }
             }

@@ -17,11 +17,11 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 2;
+    constexpr int P = 3;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    constexpr int levs = 3;
+    constexpr int levs = 2;
     algoim::uvector<int, N> elements = ipow(2,levs-1);
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
