@@ -128,6 +128,16 @@ public:
         }
     }
 
+    void print() const
+    {
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                std::cout << ((std::abs(data_[i*N+j]) > 1.e-12) ? data_[i*N+j] : 0.0) << ((j == N-1) ? ";" : ", ");
+            }
+            std::cout << std::endl;
+        }
+    }
+
 };
 
 template<int M, int N>
@@ -256,7 +266,7 @@ template<int M>
 smatrix<double, M> pseudo_inverse_with_Eigen(const smatrix<double, M> &A_in)
 {
 
-    smatrix<double, M> u, ut, B;
+    smatrix<double, M> u, v, B;
     algoim::uvector<double, M> sigma;
 
     // create a copy of A_in for eigen
@@ -279,7 +289,7 @@ smatrix<double, M> pseudo_inverse_with_Eigen(const smatrix<double, M> &A_in)
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < M; ++j) {
             u(i,j) = U(i,j);
-            ut(i,j) = U(j,i);
+            v(i, j) = V(j, i);
         }
         sigma(i) = S(i);
     }
@@ -288,13 +298,13 @@ smatrix<double, M> pseudo_inverse_with_Eigen(const smatrix<double, M> &A_in)
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < M; ++j) {
             if (abs(sigma(i)) > max(sigma)*1.e-13)
-                ut(i,j) /= sigma(i);
+                v(i, j) /= sigma(i);
             else
-                ut(i,j) *= 0.;
+                v(i, j) *= 0.;
         }
     }
 
-    B = matmat(u, ut);
+    B = matmat(u, v).transpose();
 
     return B;
 }

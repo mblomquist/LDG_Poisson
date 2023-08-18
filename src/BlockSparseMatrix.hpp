@@ -66,7 +66,8 @@ void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
                         elem_vec<P,N> &x,
                         elem_vec<P,N> &b,
                         int num_elements,
-                        int n_itr = 100)
+                        int n_itr = 100,
+                        double omega = 1.)
 {
     for (int itr = 0; itr < n_itr; ++itr)
     {
@@ -80,9 +81,10 @@ void block_Gauss_Seidel(BlockSparseMatrix<smatrix<double, ipow(P, N)>> &A,
                     sum += matvec(A(i,j),x[j]);
             }
 
+
             smatrix<double, ipow(P,N)> Ap = pseudo_inverse_with_Eigen(A(i, i));
             algoim::uvector<double, ipow(P,N)> result = b[i] - sum;
-            x[i] = matvec(Ap,result);
+            x[i] = omega * matvec(Ap,result) + (1. - omega) * x[i];
         }
     }
 }
