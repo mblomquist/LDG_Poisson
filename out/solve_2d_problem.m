@@ -13,7 +13,6 @@ G_1 = sparse(G_1);
 
 A = G_0'*M*G_0 + G_1'*M*G_1;
 
-sol = -pinv(full(A))*(M*rhs);
-
+sol = pinv(full(A))*(M*rhs);
 
 sqrt((sol-tsol)'*M*(sol-tsol))

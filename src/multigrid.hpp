@@ -75,18 +75,25 @@ public:
     elem_vec<P, N> solve(const elem_vec<P, N> &rhs) {
         b_lev[0] = rhs;
         v_cycle(0);
+
+        std::cout << "x: " <<std::endl;
+        for (int i = 0; i < n_elements_lev[0]; ++i) {
+            for (int j = 0; j < ipow(P, N); ++j) {
+                std::cout << x_lev[0][i](j) << std::endl;
+            }
+        }
         return x_lev[0];
     }
 
     // standard multigrid v_cycle with Gauss-Seidel smoothing
     void v_cycle(int lev) {
         if (lev < levels - 1) {
-            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
+//            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
             compute_residual(lev);
             restrict_r(lev);
             v_cycle(lev + 1);
             interpolate_x(lev);
-            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
+//            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
         } else {
             // bottom level direct solve
             smatrix<double, ipow(P, N)> Ap;
@@ -96,16 +103,16 @@ public:
     }
 
     void print_operators() {
-//        std::cout << "\n--- Printing Iops ---" << std::endl;
-//        for (int lev = 0; lev < levels - 1; ++lev) {
-//            std::cout << "\n\n ---------------- Level: " << lev << " ----------------" << std::endl;
-//            for (int i = 0; i < n_elements_lev[lev]; ++i) {
-//                for (auto k : Iops[lev].row[i]) {
-//                    std::cout << "(" << i << "," << k << ") " << std::endl;
-//                    Iops[lev](i,k).print();
-//                }
-//            }
-//        }
+        std::cout << "\n--- Printing Iops ---" << std::endl;
+        for (int lev = 0; lev < levels - 1; ++lev) {
+            std::cout << "\n\n ---------------- Level: " << lev << " ----------------" << std::endl;
+            for (int i = 0; i < n_elements_lev[lev]; ++i) {
+                for (auto k : Iops[lev].row[i]) {
+                    std::cout << "(" << i << "," << k << ") " << std::endl;
+                    Iops[lev](i,k).print();
+                }
+            }
+        }
 
         std::cout << "\n--- Printing Gops ---" << std::endl;
         for (int dim = 0; dim < N; ++dim) {
