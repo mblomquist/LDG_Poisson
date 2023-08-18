@@ -17,11 +17,11 @@ int main() {
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 
     // Specify template parameters (order, dimensions)
-    constexpr int P = 2;
+    constexpr int P = 3;
     constexpr int N = 2;
 
     std::cout << "\n--- Create a grid --- \n" << std::endl;
-    constexpr int levs = 2;
+    constexpr int levs = 4;
     algoim::uvector<int, N> elements = ipow(2,levs-1);
     algoim::uvector<double, N> domain_min = 0.;
     algoim::uvector<double, N> domain_max = 1.;
@@ -42,13 +42,13 @@ int main() {
     solver.solve_with_Multigrid();
     solver.compute_l2_error();
 
-    char op_file[100];
-    sprintf(op_file, "../out/op_file.csv");
-    solver.print_operators_to_file(op_file);
-
-    char v_file[100];
-    sprintf(v_file, "../out/v_file.csv");
-    solver.print_vectors_to_file(v_file);
+//    char op_file[100];
+//    sprintf(op_file, "../out/op_file.csv");
+//    solver.print_operators_to_file(op_file);
+//
+//    char v_file[100];
+//    sprintf(v_file, "../out/v_file.csv");
+//    solver.print_vectors_to_file(v_file);
 
     return 0;
 }

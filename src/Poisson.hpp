@@ -67,7 +67,7 @@ public:
             }
         }
 
-        std::cout << "L2 Error: " << l2_error << std::endl;
+        std::cout << "L2 Error: " << std::sqrt(l2_error) << std::endl;
     }
 
     void set_domain(algoim::uvector<double, N> domain_min_,

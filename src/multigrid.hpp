@@ -63,7 +63,7 @@ public:
 
         build_operators(fineGrid, G);
 
-        print_operators();
+//        print_operators();
 
     }
 
@@ -75,25 +75,20 @@ public:
     elem_vec<P, N> solve(const elem_vec<P, N> &rhs) {
         b_lev[0] = rhs;
         v_cycle(0);
+//        block_Gauss_Seidel<P,N>(Aops[0],x_lev[0], b_lev[0], n_elements_lev[0], 1000);
 
-        std::cout << "x: " <<std::endl;
-        for (int i = 0; i < n_elements_lev[0]; ++i) {
-            for (int j = 0; j < ipow(P, N); ++j) {
-                std::cout << x_lev[0][i](j) << std::endl;
-            }
-        }
         return x_lev[0];
     }
 
     // standard multigrid v_cycle with Gauss-Seidel smoothing
     void v_cycle(int lev) {
         if (lev < levels - 1) {
-//            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
+            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
             compute_residual(lev);
             restrict_r(lev);
             v_cycle(lev + 1);
             interpolate_x(lev);
-//            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
+            block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
         } else {
             // bottom level direct solve
             smatrix<double, ipow(P, N)> Ap;
@@ -262,15 +257,29 @@ public:
                 r_lev[lev][i] = b_lev[lev][i] - matvec(Aops[lev](i, j), x_lev[lev][j]);
             }
         }
+
+//        std::cout << "Computing residual at lev " << lev << std::endl;
+//        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+//            for (int j = 0; j < ipow(P, N); ++j) {
+//                std::cout << r_lev[lev][i](j) << std::endl;
+//            }
+//        }
     }
 
     void restrict_r(const int lev) {
 
         for (int i = 0; i < n_elements_lev[lev+1]; ++i) {
             for (auto j: Iops[lev].col[i]) {
-                b_lev[lev + 1][i] = matvec(Iops[lev](j, i).transpose(), r_lev[lev][j]);
+                b_lev[lev + 1][i] += matvec(Iops[lev](j, i).transpose(), r_lev[lev][j]);
             }
         }
+
+//        std::cout << "Computing restriction at lev+1 " << lev+1 << std::endl;
+//        for (int i = 0; i < n_elements_lev[lev+1]; ++i) {
+//            for (int j = 0; j < ipow(P, N); ++j) {
+//                std::cout << b_lev[lev+1][i](j) << std::endl;
+//            }
+//        }
     }
 
     void interpolate_x(const int lev) {
@@ -280,6 +289,13 @@ public:
                 x_lev[lev][i] += matvec(Iops[lev](i, j), x_lev[lev + 1][j]);
             }
         }
+
+//        std::cout << "Interpolating x at lev " << lev << std::endl;
+//        for (int i = 0; i < n_elements_lev[lev]; ++i) {
+//            for (int j = 0; j < ipow(P, N); ++j) {
+//                std::cout << x_lev[lev][i](j) << std::endl;
+//            }
+//        }
     }
 
     void print_r_lev(const int lev) {

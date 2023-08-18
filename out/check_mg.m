@@ -41,4 +41,4 @@ Ac = Gc_0'*Gc_0 + Gc_1'*Gc_1;
 r = rhs;
 r = I10'*r;
 x = pinv(Ac)*r;
-x = I10*x;
+x = I10*x
