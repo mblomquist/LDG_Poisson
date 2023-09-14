@@ -50,5 +50,7 @@ int main() {
 //    sprintf(v_file, "../out/v_file.csv");
 //    solver.print_vectors_to_file(v_file);
 
+    solver.print_sol_on_uniform_grid();
+
     return 0;
 }

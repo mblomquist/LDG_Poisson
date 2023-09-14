@@ -33,7 +33,6 @@ class MultiGrid {
 public:
 
     MultiGrid(const uniformGrid<N> &fineGrid, const BlockSparseMatrix<smatrix<double, ipow(P, N)>> *G) {
-//        levels = std::sqrt(fineGrid.get_elements_per_dim()(0)) + 1;
 
         int elm_dim = fineGrid.get_elements_per_dim()(0);
         while (elm_dim > 1)
@@ -74,8 +73,18 @@ public:
 
     elem_vec<P, N> solve(const elem_vec<P, N> &rhs) {
         b_lev[0] = rhs;
+        // multiple iterations of the v-cycle
         v_cycle(0);
-//        block_Gauss_Seidel<P,N>(Aops[0],x_lev[0], b_lev[0], n_elements_lev[0], 1000);
+        v_cycle(0);
+        v_cycle(0);
+        v_cycle(0);
+        v_cycle(0);
+        v_cycle(0);
+        v_cycle(0);
+        v_cycle(0);
+
+//        // solve system with block GS
+//        block_Gauss_Seidel<P,N>(Aops[0],x_lev[0], b_lev[0], n_elements_lev[0], 500);
 
         return x_lev[0];
     }
@@ -83,11 +92,15 @@ public:
     // standard multigrid v_cycle with Gauss-Seidel smoothing
     void v_cycle(int lev) {
         if (lev < levels - 1) {
+            // initialize x_lev to 0 execpt on finest mesh -- TODO
             block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
             compute_residual(lev);
             restrict_r(lev);
+//            x_lev[lev+1] = 0.;
             v_cycle(lev + 1);
             interpolate_x(lev);
+            // add correction -- TODO
+            // it might be useful to use reverse ordering for GS here.
             block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
         } else {
             // bottom level direct solve
@@ -149,7 +162,6 @@ public:
                                     fineGrid.get_xmax());
 
             Mops[lev] = prod(grid_lev.get_dx());
-//            std::cout << "Building Interpolation Operator on: " << lev << std::endl;
             build_interpolation_operator(grid_lev, Iops[lev]);
         }
 

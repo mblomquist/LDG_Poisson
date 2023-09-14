@@ -129,6 +129,12 @@ public:
         l2_projection(t_sol, func);
     }
 
+    void print_sol_on_uniform_grid()
+    {
+        evaluate_basis_on_uniform_grid(sol, 50, "../../solution.vtk", "solution");
+        return;
+    }
+
     void evaluate_basis_on_uniform_grid(std::unordered_map<int, algoim::uvector<double, ipow(P,N)>> &basis_coeffs,
                                         algoim::uvector<int, N> pts_per_dim,
                                         const std::string& filename,
