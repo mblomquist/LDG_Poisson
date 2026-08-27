@@ -74,14 +74,14 @@ public:
     elem_vec<P, N> solve(const elem_vec<P, N> &rhs) {
         b_lev[0] = rhs;
         // multiple iterations of the v-cycle
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
-        v_cycle(0);
+        for (int cyc = 0; cyc < 12; ++cyc) {
+            v_cycle(0);
+            // The periodic Poisson operator is singular: the global constant
+            // mode lies in its null space, so the coarse-grid correction can
+            // drift the solution by an arbitrary constant.  Fix the gauge by
+            // projecting the constant mode out of the finest-level solution.
+            project_out_constant(x_lev[0], n_elements_lev[0]);
+        }
 
 //        // solve system with block GS
 //        block_Gauss_Seidel<P,N>(Aops[0],x_lev[0], b_lev[0], n_elements_lev[0], 500);
@@ -95,8 +95,11 @@ public:
             // initialize x_lev to 0 execpt on finest mesh -- TODO
             block_Gauss_Seidel<P, N>(Aops[lev], x_lev[lev], b_lev[lev], n_elements_lev[lev], mu);
             compute_residual(lev);
+            // reset coarse-grid rhs (restrict_r accumulates with +=) and the
+            // coarse-grid correction (must start from zero each cycle)
+            b_lev[lev + 1].clear();
+            x_lev[lev + 1].clear();
             restrict_r(lev);
-//            x_lev[lev+1] = 0.;
             v_cycle(lev + 1);
             interpolate_x(lev);
             // add correction -- TODO
@@ -262,11 +265,24 @@ public:
         }
     }
 
+    // Remove the global constant (null-space) mode from a solution vector.
+    // For the (normalized) Legendre basis the 0th coefficient of each element
+    // is its mean value, so the global constant mode is the average of those.
+    void project_out_constant(elem_vec<P, N> &x, const int num_elements) {
+        double mean = 0.;
+        for (int i = 0; i < num_elements; ++i)
+            mean += x[i](0);
+        mean /= num_elements;
+        for (int i = 0; i < num_elements; ++i)
+            x[i](0) -= mean;
+    }
+
     void compute_residual(const int lev) {
 
         for (int i = 0; i < n_elements_lev[lev]; ++i) {
+            r_lev[lev][i] = b_lev[lev][i];
             for (auto j : Aops[lev].row[i]) {
-                r_lev[lev][i] = b_lev[lev][i] - matvec(Aops[lev](i, j), x_lev[lev][j]);
+                r_lev[lev][i] -= matvec(Aops[lev](i, j), x_lev[lev][j]);
             }
         }
 
