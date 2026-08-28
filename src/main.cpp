@@ -1,18 +1,28 @@
 #include <iostream>
 #include <functional>
+#include <string>
 
 #include "../../eigen/Eigen/Dense"
 #include "uvector.hpp"
 #include "grid.hpp"
 #include "Poisson.hpp"
 #include "multigrid.hpp"
+#include "convergence_test.hpp"
 
 #define PI 3.14159265358979323846
 
 using algoim::uvector;
 using algoim::MultiLoop;
 
-int main() {
+int main(int argc, char** argv) {
+
+    // Order-of-accuracy benchmark mode: run with --convergence-test
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--convergence-test") {
+            convergence_test::run_benchmark<3>();
+            return 0;
+        }
+    }
 
     std::cout << "Hello, LDG Poisson Solver!" << std::endl;
 

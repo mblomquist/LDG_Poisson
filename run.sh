@@ -1,2 +1,2 @@
 cd cmake-build
-./LDG_Poisson
+./LDG_Poisson --convergence-test
