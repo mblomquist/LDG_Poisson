@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     solver.set_elements_per_dim(elements);
 
     std::cout << "\n--- Project the rhs and true solution --- \n" << std::endl;
-    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return -4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
+    std::function<double(uvector<double, N> x)> cf_rhs = [](uvector<double, N> x) { return 4.*PI*PI*(sin(2.*PI*x(0)) + sin(2.*PI*x(1)));};
     solver.project_rhs(cf_rhs);
 
     std::function<double(uvector<double, N> x)> cf_sol = [](uvector<double, N> x) { return sin(2.*PI*x(0))+sin(2.*PI*x(1));};

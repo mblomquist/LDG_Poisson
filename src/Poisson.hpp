@@ -264,7 +264,7 @@ public:
                 sol[i](a) = x[i * S + a];
     }
 
-    // L2 error ||sol + t_sol|| (the solver's convention is sol -> -t_sol).  For
+    // L2 error ||sol - t_sol|| (the solver's convention is sol -> +t_sol).  For
     // the pure Neumann problem the solution is only defined up to a constant, so
     // pass subtract_mean = true to compare after removing the domain-average
     // constant mode from both fields.
@@ -277,13 +277,13 @@ public:
         double mean = 0.;
         if (subtract_mean) {
             for (int i = 0; i < num_elements; ++i)
-                mean += sol[i](0) + t_sol[i](0);
+                mean += sol[i](0) - t_sol[i](0);
             mean /= num_elements;
         }
 
         for (int i = 0; i < num_elements; ++i) {
             for (int j = 0; j < ipow(P, N); ++j) {
-                double d = sol[i](j) + t_sol[i](j);
+                double d = sol[i](j) - t_sol[i](j);
                 if (subtract_mean && j == 0)
                     d -= mean;
                 l2_error += prod(grid.get_dx()) * std::pow(d, 2);
